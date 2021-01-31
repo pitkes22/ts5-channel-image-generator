@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16" shape-rendering="geometricPrecision" fill="white" style="clip-rule: evenodd; fill-rule: evenodd; stroke-linejoin: round; stroke-miterlimit: 1.41421;">
+    <rect xmlns="http://www.w3.org/2000/svg" id="channel" x="0" y="0" width="16" height="16" style="fill:none;"></rect>
+    <clipPath xmlns="http://www.w3.org/2000/svg" id="_clip1">
+        <rect x="0" y="0" width="16" height="16"></rect>
+    </clipPath>
+    <g xmlns="http://www.w3.org/2000/svg" clip-path="url(#_clip1)">
+        <path d="M8,0L14.928,4L14.928,12L8,16L1.072,12L1.072,4L8,0Z" class="tsv-icon-channel-bg-fill" style=""></path>
+        <path d="M8,0.972L1.913,4.486L1.913,11.514L8,8L8,0.972Z" class="tsv-icon-channel-shade1-fill" style=""></path>
+        <path d="M14.087,11.514L14.087,4.486L8,0.972L8,8L14.087,11.514Z" class="tsv-icon-channel-shade2-fill" style=""></path>
+        <path d="M1.913,11.514L8,15.028L14.087,11.514L8,8L1.913,11.514Z" class="tsv-icon-channel-shade3-fill" style=""></path>
+    </g>
+</svg>
