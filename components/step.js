@@ -2,8 +2,8 @@ import React from 'react';
 import styled from "styled-components";
 
 const Fieldset = styled.fieldset`
-  padding: 1.35em 1.75em 1.625em;
-  margin-bottom: 2rem;
+  padding: 0.35em 1.75em 1.625em;
+  margin-bottom: 1rem;
   border-radius: 5px;
   border-width: 1px;
   border-style: solid;

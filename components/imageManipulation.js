@@ -1,5 +1,5 @@
-import React, {useState, useCallback, useEffect} from 'react';
-import {debounce} from "lodash";
+import React, {useEffect, useState} from 'react';
+import {throttle} from "lodash";
 
 export const CHANNEL_HEIGHT = 22;
 export const CHANNEL_BANNER_HEIGHT = 30;
@@ -14,12 +14,13 @@ const initialValue = {
     results: [],
     inputFile: {
         data: null,
-        height: 100,
+        height: 30,
         width: 100
     },
     exportStatus: {
         start : null,
         end : null,
+        delta: null
     }
 }
 
@@ -72,9 +73,9 @@ const generateImages = (inputFile, options, cb) => {
     cb(result);
 }
 
-const DEBOUNCE_TIME = 50;
+const THROTTLE_TIME = 100;
 
-const debouncedGenerateImage = debounce(generateImages, DEBOUNCE_TIME);
+const debouncedGenerateImage = throttle(generateImages, THROTTLE_TIME);
 
 const ImageManipulation = ({children}) => {
     const [results, setResults] = useState(initialValue.results);
@@ -83,18 +84,20 @@ const ImageManipulation = ({children}) => {
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
 
     useEffect(() => {
-        setExportStatus((c) => ({...c, start: Date.now() + DEBOUNCE_TIME, end: null}));
+        if (inputFile.data == null) return;
+        const start = Date.now();
+        setExportStatus((c) => ({...c, start: start, end: null}));
         debouncedGenerateImage(inputFile, options, (results) => {
             setResults(results)
-            setExportStatus((c) => ({...c, end: Date.now()}));
+            const end = Date.now();
+            setExportStatus((c) => ({...c, end: end, delta: end - start}));
         });
     }, [inputFile, options])
 
     useEffect(() => {
         const slices = getSlicesCount(inputFile.width, inputFile.height,
             options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT);
-        console.log(slices);
-        setOptions((o) => ({...o, slices }))
+        setOptions((o) => ({...o, slices, yOffset: 0 }))
     }, [inputFile])
 
     const value = {

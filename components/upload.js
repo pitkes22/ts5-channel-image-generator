@@ -1,23 +1,55 @@
-import React from 'react';
+import React, {useContext, useState} from 'react';
 import Step from "./step";
-import {FileInput, FormGroup} from "@blueprintjs/core";
-import {useState, useContext} from "react";
+import {Button, Callout, Code, FileInput, FormGroup, Icon, InputGroup} from "@blueprintjs/core";
 import styled from 'styled-components';
-import {CHANNEL_BANNER_HEIGHT, CHANNEL_BANNER_WIDTH, ImageManipulationContext} from "./imageManipulation";
+import {CHANNEL_BANNER_WIDTH, ImageManipulationContext} from "./imageManipulation";
+import {toaster} from "../pages";
 
 const ImagePreview = styled.img`
+  width: 300px;
+  object-fit: contain;
+  border: 1px solid rgb(255 255 255 / 20%);
+`
+
+const ImagePreviewPlaceholder = styled.div`
   height: 250px;
-  width: auto;
+  width: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(0 0 0 / 20%);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 5px;
 `
 
 const UploadStep = styled(Step)`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+`
+
+const Col = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: ${props => props.$width ?? 30};
+  min-width: 330px;
+`
+
+const FileSupportCallout = styled(Callout)`
+  min-width: 100%;
+  margin-bottom: 2rem;
+`
+
+const LoadButton = styled(Button)`
+  width: 85px;
 `
 
 const Upload = () => {
     const {inputFile, setInputFile} = useContext(ImageManipulationContext);
+    const [loadUrl, setLoadUrl] = useState("");
+    const [isUrlLoading, setIsUrlLoading] = useState(false);
 
     const fileToDataURL = (file) => {
         return new Promise((resolve) => {
@@ -29,25 +61,31 @@ const Upload = () => {
         })
     }
 
-    const resizeImageFromDataURL = (url, metadata) => {
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d');
+    const resizeImageFromDataURL = async (url, metadata) => {
+        return new Promise(resolve => {
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d');
 
-        canvas.width = 500;
-        canvas.height = metadata.height * (CHANNEL_BANNER_WIDTH / metadata.width);
+            canvas.width = 500;
+            canvas.height = metadata.height * (CHANNEL_BANNER_WIDTH / metadata.width);
 
-        console.log('height', metadata.width, metadata.height, canvas.width, canvas.height);
+            console.log('height', metadata.width, metadata.height, canvas.width, canvas.height);
 
-        const img = new Image();
-        img.src = url;
+            const img = new Image();
 
-        ctx.drawImage(img, 0, 0, metadata.width, metadata.height, 0, 0, canvas.width, canvas.height);
+            img.crossOrigin = "Anonymous"
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, metadata.width, metadata.height, 0, 0, canvas.width, canvas.height);
 
-        return canvas.toDataURL();
+                resolve(canvas.toDataURL());
+            }
+
+            img.src = url;
+        })
     }
 
     const getImageMetadataFromDataURL = (url) => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
                 resolve({
@@ -55,6 +93,7 @@ const Upload = () => {
                     height: img.height,
                 })
             }
+            img.onerror = reject
             img.src = url;
         })
     }
@@ -66,7 +105,7 @@ const Upload = () => {
 
         const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
 
-        const resizedImageDataURL = resizeImageFromDataURL(dataURL, sourceImageMetadata);
+        const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
 
         const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
 
@@ -78,26 +117,86 @@ const Upload = () => {
         })
     }
 
+    const loadHandler = async () => {
+        setIsUrlLoading(true);
+        const dataURL = loadUrl;
+
+        try {
+            const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
+
+            const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
+
+            const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
+
+            setIsUrlLoading(false);
+            setInputFile({
+                data: resizedImageDataURL,
+                width: metadata.width,
+                height: metadata.height,
+                name: "loaded"
+            })
+        } catch (e) {
+            setIsUrlLoading(false);
+            toaster.show({intent: "danger", message: "Failed to load image from URL", icon: "error"})
+        }
+    }
+
     return (
         <UploadStep number={1}>
-            <FormGroup
-                label="Image File"
-                helperText="Upload image that you would like to convert into room banners"
-                labelFor="file-input"
-                labelInfo="(required)"
-            >
-                <FileInput
-                    inputProps={{
-                        accept: 'image/*'
-                    }}
-                    id={'file-input'}
-                    text={inputFile.name ?? 'Choose file...'}
-                    onInputChange={uploadHandler}
-                    large={true}
-                />
-            </FormGroup>
-
-            {inputFile.data && <ImagePreview src={inputFile.data} alt="Image Preview"/>}
+            <Col $width={'calc(100% - 350px)'}>
+                <FileSupportCallout intent={"primary"} title={"Supported image formats"}>
+                    Image formats that are supported depends on your browser but in general all modern image formats
+                    should work fine.
+                    Animated banners are not yet supported and they will be converted to static one.
+                    Output images are in resolution <Code>500x22</Code> pixels so optimal size for the input image is
+                    width <Code>500px</Code> and height that can be divided evenly.
+                </FileSupportCallout>
+                <Col $width={'50%'}>
+                    <FormGroup
+                        label="Image File"
+                        helperText={<>Upload image that you would like to convert into room banners.<br/>Images are not uploaded to the server and all processing is done in the browser.</>}
+                        labelFor="file-input"
+                        labelInfo="(Upload from your computer)"
+                    >
+                        <FileInput
+                            style={{width: 330}}
+                            fill={true}
+                            inputProps={{
+                                accept: 'image/*'
+                            }}
+                            id={'file-input'}
+                            text={inputFile.name ?? 'Choose file...'}
+                            onInputChange={uploadHandler}
+                            large={true}
+                        />
+                    </FormGroup>
+                </Col>
+                <Col $width={'50%'}>
+                    <FormGroup
+                        label="Image URL"
+                        helperText="Load image from public URL"
+                        labelFor="file-url"
+                        labelInfo="(Load from the internet)"
+                    >
+                        <InputGroup
+                            style={{width: 330}}
+                            large={true}
+                            fill={true}
+                            onChange={(e) => {
+                                setLoadUrl(e.target.value)
+                            }}
+                            placeholder="Image URL..."
+                            rightElement={<LoadButton loading={isUrlLoading} large={true}
+                                                      onClick={loadHandler}>Load</LoadButton>}
+                            value={loadUrl}
+                        />
+                    </FormGroup>
+                </Col>
+            </Col>
+            <Col $width={'250px'} style={{justifyContent: 'flex-end'}}>
+                {inputFile.data ? <ImagePreview src={inputFile.data} alt="Image Preview"/> :
+                    <ImagePreviewPlaceholder><Icon icon={"media"} iconSize={50}/></ImagePreviewPlaceholder>}
+            </Col>
         </UploadStep>
     );
 };

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const Grid = styled.div`
   display: grid;
   grid-template-columns: auto 586px;
-  grid-template-rows: auto 200px;
+  grid-template-rows: auto 250px;
   min-height: 100vh;
   min-width: 100vw;
   height: 100vh;
@@ -21,6 +21,7 @@ const AreaMain = styled.main`
   padding: 1rem;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 `
 
 const AreaPreview = styled.div`
@@ -40,6 +41,7 @@ const AreaDescription = styled.div`
   grid-row-end: 3;
   background-color: #2b3346;
   padding: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.2);
 `
 
 const Layout = ({main, preview, description}) => {

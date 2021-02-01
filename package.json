@@ -10,6 +10,8 @@
   "dependencies": {
     "@blueprintjs/core": "^3.38.1",
     "@react-hook/throttle": "^2.2.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.5.0",
     "lodash": "^4.17.20",
     "next": "10.0.6",
     "react": "17.0.1",
