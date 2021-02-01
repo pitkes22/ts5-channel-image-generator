@@ -1,3 +1,3 @@
 module.exports = {
-    /* config options here */
+    basePath: '/ts5-channel-image-generator',
 }
