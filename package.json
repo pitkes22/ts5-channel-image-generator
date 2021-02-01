@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export",
-    "start": "next start",
+    "start": "next start"
   },
   "dependencies": {
     "@blueprintjs/core": "^3.38.1",
