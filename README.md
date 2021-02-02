@@ -1,7 +1,5 @@
 # TeamSpeak 5 Channel Image Generator
-** Simple tool 🔨 for generating TeamSpeak 5 channel images 🖼️ **
-
-----
+**Simple tool 🔨 for generating TeamSpeak 5 channel images 🖼️**
 
 ## ✨ Try it out 
 
@@ -35,4 +33,4 @@ dependent on supported file formats of given browser.
 ## 🍰 Contributing
 
 Any contribution is welcomed. 
-Feel free to create an Issue if you found a bug, or you have an idea how to improve the app! 
+Feel free to create an issue if you found a bug, or you have an idea how to improve the app! 
