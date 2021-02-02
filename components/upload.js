@@ -51,6 +51,12 @@ const Upload = () => {
     const [loadUrl, setLoadUrl] = useState("");
     const [isUrlLoading, setIsUrlLoading] = useState(false);
 
+    /**
+     * Converts File blob to Data URL
+     *
+     * @param file Blob
+     * @return {Promise<unknown>}
+     */
     const fileToDataURL = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -61,15 +67,21 @@ const Upload = () => {
         })
     }
 
+    /**
+     * Resizes image to maxWidth specified by value of CHANNEL_BANNER_WIDTH constant. This is done to scale done image
+     * to the maximum useful resolution at the beginning to prevent unnecessary work when working with big images.
+     *
+     * @param url URL of the image to be scaled down
+     * @param metadata Metadata of the image
+     * @return {Promise<unknown>}
+     */
     const resizeImageFromDataURL = async (url, metadata) => {
         return new Promise(resolve => {
             const canvas = document.createElement('canvas')
             const ctx = canvas.getContext('2d');
 
-            canvas.width = 500;
+            canvas.width = CHANNEL_BANNER_WIDTH;
             canvas.height = metadata.height * (CHANNEL_BANNER_WIDTH / metadata.width);
-
-            console.log('height', metadata.width, metadata.height, canvas.width, canvas.height);
 
             const img = new Image();
 
@@ -84,6 +96,12 @@ const Upload = () => {
         })
     }
 
+    /**
+     * Export metadata (width, height) from the image specified by URL
+     *
+     * @param url URL of the image
+     * @return {Promise<unknown>}
+     */
     const getImageMetadataFromDataURL = (url) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -98,6 +116,12 @@ const Upload = () => {
         })
     }
 
+    /**
+     * Handles uploading of the image using file input form
+     *
+     * @param e Input change event
+     * @return {Promise<void>}
+     */
     const uploadHandler = async (e) => {
         const file = e.target.files[0];
 
@@ -117,6 +141,11 @@ const Upload = () => {
         })
     }
 
+    /**
+     * Handles loading of image from the given URL
+     *
+     * @return {Promise<void>}
+     */
     const loadHandler = async () => {
         setIsUrlLoading(true);
         const dataURL = loadUrl;

@@ -19,10 +19,18 @@ const Export = () => {
 
     const disabled = inputFile.data == null;
 
+    // When new results are generated invalidates current export
     useEffect(() => {
         setExportProgress(null);
     }, [results])
 
+    /**
+     * Creates ZIP file with result images in /images folder and /files.txt file that contains names of all images in
+     * images folder. If file name prefix is specified images are prefixed with it (`prefix_%d.png`) otherwise
+     * `%d.png` file name is used.
+     *
+     * @return {Promise<void>}
+     */
     const exportToZip = async () => {
         const start = Date.now();
         setExportProgress(0.1);
@@ -87,7 +95,8 @@ const Export = () => {
             <FormGroup
                 label="Image file prefix"
                 labelInfo={"(optional)"}
-                helperText={<>(File format will be <Code>prefix_%d.png</Code>). Name of all images will be saved to files.txt file for convenience</>}
+                helperText={<>(File format will be <Code>prefix_%d.png</Code>). Name of all images will be saved to
+                    files.txt file for convenience</>}
                 disabled={disabled}
             >
                 <InputGroup

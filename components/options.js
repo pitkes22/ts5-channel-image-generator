@@ -23,11 +23,11 @@ const Options = () => {
     const channelHeight = options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT;
 
     const maxChannels = getSlicesCount(inputFile.width, inputFile.height, channelHeight);
-
     const maxVerticalOffset = inputFile.height - options.slices * channelHeight;
 
     const disabled = inputFile.data == null;
 
+    // When options are change check if current values are still valid and if not calculate new values for them
     useEffect(() => {
         if (options.slices > maxChannels) {
             setOption('slices', maxChannels);

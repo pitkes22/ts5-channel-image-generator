@@ -65,17 +65,25 @@ const RoomTitle = styled.span`
   margin-bottom: 4px;
 `
 
+/**
+ * Renders one room in the preview. It should be rendered exactly the same way as in TeamSpeak 5 Client.
+ *
+ * @param name Name of the room
+ * @param image Background image of the room (URL)
+ * @return {JSX.Element}
+ * @constructor
+ */
 const Room = ({name, image}) => {
     return (
         <RoomWrapper>
             <RoomContent>
                 <RoomIcon>
-                    <img src={'/roomIcon.svg'}/>
+                    <img src={`roomIcon.svg`} alt={'Room Icon'}/>
                 </RoomIcon>
                 <RoomTitle>{name}</RoomTitle>
             </RoomContent>
             <RoomContainer>
-                <Image src={image} alt="Banner Fragment"/>
+                {image && <Image src={image} alt="Banner Fragment"/>}
                 <ImageMask/>
             </RoomContainer>
         </RoomWrapper>

@@ -20,7 +20,7 @@ export default function Home() {
         <>
             <Head>
                 <title>TS5 Channel Image Generator</title>
-                <link rel="icon" href="/favicon.png"/>
+                <link rel="icon" href="favicon.png"/>
             </Head>
 
             <ImageManipulation>

@@ -3,7 +3,7 @@ import Room from "./room";
 import {ImageManipulationContext} from "./imageManipulation";
 
 const Preview = () => {
-    const {results} = useContext(ImageManipulationContext);
+    let {results} = useContext(ImageManipulationContext);
 
     return (
         <div>

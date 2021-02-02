@@ -32,7 +32,7 @@ const Description = () => {
         <Container>
             <h1>TeamSpeak 5 Channel Image Generator</h1>
             <div className={'p'}>Simple interactive tool for generating background images for channels in
-                new <a href="https://teamspeak.com/en/downloads/#ts5" target={'_blank'}>TeamSpeak 5 beta client</a>.
+                new <a href="https://teamspeak.com/en/downloads/#ts5" target={'_blank'} rel="noopener">TeamSpeak 5 beta client</a>.
                 Upload any image and it will be resized and split into multiple images that you can simply use as
                 banners on your channels.</div>
 

@@ -11,22 +11,29 @@ const initialValue = {
         yOffset: 0,
         ignoreSpacing: false
     },
-    results: [],
+    results: [null, null, null, null, null], // By default show 5 rooms without image
     inputFile: {
         data: null,
         height: 30,
         width: 100
     },
     exportStatus: {
-        start : null,
-        end : null,
+        start: null,
+        end: null,
         delta: null
     }
 }
 
 export const ImageManipulationContext = React.createContext(initialValue);
 
-function getCanvasAdnImageWithImage(image, channelHeight) {
+/**
+ * Creates HTML canvas with image and returns reference to both
+ *
+ * @param image URL of image
+ * @param channelHeight height of the canvas (output)
+ * @return {(HTMLCanvasElement|HTMLImageElement)[]}
+ */
+function getCanvasAndImageWithImage(image, channelHeight) {
     const canvas = document.createElement('canvas')
 
     canvas.width = CHANNEL_BANNER_WIDTH;
@@ -39,6 +46,18 @@ function getCanvasAdnImageWithImage(image, channelHeight) {
     return [canvas, img];
 }
 
+/**
+ * Renders image on canvas in given position and returns base64 encoded image of the visible area.
+ *
+ * @param canvas Canvas to render image on
+ * @param img Image Object that will be rendered
+ * @param x Horizontal position
+ * @param y Vertical position
+ * @param width Width of the source image
+ * @param height height of the source image
+ * @param channelHeight Output height of the image
+ * @return {string} Base64 encoded image (DataURL)
+ */
 function getClippedRegion(canvas, img, x, y, width, height, channelHeight) {
     const ctx = canvas.getContext('2d');
 
@@ -47,11 +66,26 @@ function getClippedRegion(canvas, img, x, y, width, height, channelHeight) {
     return canvas.toDataURL();
 }
 
+/**
+ * Returns maximum amount of slices that image can be sliced to
+ *
+ * @param width Width of the source image
+ * @param height height of the source image
+ * @param channelHeight Output height of the image
+ * @return {number} Number of slices
+ */
 export const getSlicesCount = (width, height, channelHeight) => {
     const sizeRatio = width / CHANNEL_BANNER_WIDTH;
     return ~~(height / (channelHeight * sizeRatio))
 }
 
+/**
+ * Generates slices of the inputFile image based on the given options
+ *
+ * @param inputFile Input file object containing base64URL encoded image data and image metadata (width, height, name)
+ * @param options Options object providing values like number of output slices, height of the slice and vertical offset
+ * @param cb Callback that will be called when images are generated (Promise API cant be used because we need to throttle this function)
+ */
 const generateImages = (inputFile, options, cb) => {
     const channelHeight = options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT;
 
@@ -59,7 +93,7 @@ const generateImages = (inputFile, options, cb) => {
 
     const slicesCount = getSlicesCount(inputFile.width, inputFile.height, channelHeight)
 
-    const [canvas, image] = getCanvasAdnImageWithImage(inputFile.data, channelHeight);
+    const [canvas, image] = getCanvasAndImageWithImage(inputFile.data, channelHeight);
 
     const result = [];
     for (let i = 0; i < options.slices; i++) {
@@ -73,8 +107,15 @@ const generateImages = (inputFile, options, cb) => {
     cb(result);
 }
 
+// Throttle time of the generateImage function. Should be approximately same as average time that it takes process average image.
 const THROTTLE_TIME = 100;
 
+/**
+ * Throttled (Using lodash throttle) generateImage function that is used to prevent generating unnecessarily to many
+ * images when changing options using UI
+ *
+ * @type {DebouncedFunc<generateImages>}
+ */
 const debouncedGenerateImage = throttle(generateImages, THROTTLE_TIME);
 
 const ImageManipulation = ({children}) => {
@@ -83,6 +124,7 @@ const ImageManipulation = ({children}) => {
     const [inputFile, setInputFile] = useState(initialValue.inputFile);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
 
+    // When inputFile or options are changed it generates new result images
     useEffect(() => {
         if (inputFile.data == null) return;
         const start = Date.now();
@@ -94,10 +136,11 @@ const ImageManipulation = ({children}) => {
         });
     }, [inputFile, options])
 
+    // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
         const slices = getSlicesCount(inputFile.width, inputFile.height,
             options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT);
-        setOptions((o) => ({...o, slices, yOffset: 0 }))
+        setOptions((o) => ({...o, slices, yOffset: 0}))
     }, [inputFile])
 
     const value = {
