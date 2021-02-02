@@ -37,7 +37,7 @@ const Description = () => {
                 banners on your channels.</div>
 
             <div className={'p'}>If you like the project you can buy me a beer 🍻 <DonateButtonStyled/> or contribute to the project
-                on <a href="https://github.com/daco" target={'_blank'}>github (bug reports are welcomed)</a> !</div>
+                on <a href="https://github.com/pitkes22/ts5-channel-image-generator" target={'_blank'}>github (bug reports are welcomed)</a> !</div>
 
             <div className={'p'}>&copy; 2020 - <a href="mailto:padampasam@gmail.com" target={'_blank'}>Peter Adam</a></div>
         </Container>
