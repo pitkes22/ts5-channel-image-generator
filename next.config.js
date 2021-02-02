@@ -1,3 +1,3 @@
 module.exports = {
-    // basePath: '/ts5-channel-image-generator',
+    basePath: '/ts5-channel-image-generator',
 }
