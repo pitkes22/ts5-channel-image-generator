@@ -61,6 +61,7 @@ function getCanvasAndImageWithImage(image, channelHeight) {
 function getClippedRegion(canvas, img, x, y, width, height, channelHeight) {
     const ctx = canvas.getContext('2d');
 
+    ctx.clearRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
     ctx.drawImage(img, x, y, width, height, 0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
 
     return canvas.toDataURL();

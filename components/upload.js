@@ -131,7 +131,10 @@ const Upload = () => {
 
         const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
 
-        const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
+        console.log({sourceImageMetadata})
+
+        const resizedImageDataURL = dataURL;
+        // const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
 
         const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
 
