@@ -46,15 +46,6 @@ const LoadButton = styled(Button)`
   width: 85px;
 `
 
-const loadCrossOriginImage = (src) => {
-    return new Promise(((resolve, reject) => {
-        const imageElement = document.createElement('img');
-        imageElement.onload = resolve;
-        imageElement.onerror = reject;
-        imageElement.src = src;
-    }))
-}
-
 const Upload = () => {
     const {inputFile, setInputFile} = useContext(ImageManipulationContext);
     const [loadUrl, setLoadUrl] = useState("");
@@ -85,7 +76,7 @@ const Upload = () => {
      * @return {Promise<unknown>}
      */
     const resizeImageFromDataURL = async (url, metadata) => {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             const canvas = document.createElement('canvas')
             const ctx = canvas.getContext('2d');
 
@@ -114,15 +105,13 @@ const Upload = () => {
     const getImageMetadataFromDataURL = (url) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
-
-            img.onerror = reject
             img.onload = () => {
                 resolve({
                     width: img.width,
                     height: img.height,
                 })
             }
-            img.crossOrigin = "Anonymous"
+            img.onerror = reject
             img.src = url;
         })
     }
@@ -142,7 +131,10 @@ const Upload = () => {
 
         const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
 
-        const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
+        console.log({sourceImageMetadata})
+
+        const resizedImageDataURL = dataURL;
+        // const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
 
         const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
 
@@ -161,11 +153,12 @@ const Upload = () => {
      */
     const loadHandler = async () => {
         setIsUrlLoading(true);
+        const dataURL = loadUrl;
 
         try {
-            const sourceImageMetadata = await getImageMetadataFromDataURL(loadUrl);
+            const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
 
-            const resizedImageDataURL = await resizeImageFromDataURL(loadUrl, sourceImageMetadata);
+            const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
 
             const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
 
@@ -177,29 +170,8 @@ const Upload = () => {
                 name: "loaded"
             })
         } catch (e) {
-            // When error occurs when loading image from url we will try to load it again using HTML img element.
-            // If this second attempt work we can be pretty sure that issue is in the CORS and we can show appropriate
-            // error message to the user.
-            try {
-                await loadCrossOriginImage(loadUrl);
-                toaster.show({
-                    intent: "danger",
-                    message: <>It seems that site that you are trying to load images from does not allow images to be
-                        accessed by other sites.
-                        Plese download the image a upload it manually. If you are site administrator you can get <a
-                            href={'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'}>more information
-                            here</a>.</>,
-                    icon: "error"
-                })
-            } catch (x) {
-                toaster.show({
-                    intent: "danger",
-                    message: <>Unable to load image from URL. Plese check if this is a valid url to image, local address
-                        such as <code>file://</code> or <code>C://</code> will not work.</>,
-                    icon: "error"
-                })
-            }
             setIsUrlLoading(false);
+            toaster.show({intent: "danger", message: "Failed to load image from URL", icon: "error"})
         }
     }
 
@@ -216,8 +188,7 @@ const Upload = () => {
                 <Col $width={'50%'}>
                     <FormGroup
                         label="Image File"
-                        helperText={<>Upload image that you would like to convert into room banners.<br/>Images are not
-                            uploaded to the server and all processing is done in the browser.</>}
+                        helperText={<>Upload image that you would like to convert into room banners.<br/>Images are not uploaded to the server and all processing is done in the browser.</>}
                         labelFor="file-input"
                         labelInfo="(Upload from your computer)"
                     >
