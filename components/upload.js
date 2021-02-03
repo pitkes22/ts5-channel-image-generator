@@ -122,7 +122,7 @@ const Upload = () => {
                     height: img.height,
                 })
             }
-            img.crossOrigin = "Anonymous"
+            // img.crossOrigin = "Anonymous"
             img.src = url;
         })
     }
@@ -163,6 +163,13 @@ const Upload = () => {
         setIsUrlLoading(true);
 
         try {
+            // Tries to load image using fetch to get network error (primarily need to catch CORS events) that can be
+            // caught because when loading fails inside canvas it does not produce Exception.
+            await fetch(loadUrl);
+
+            // TODO: Instead of fetched image from the internet two times data from first fetch should be encoded to
+            //  base64URL and then used to process image
+
             const sourceImageMetadata = await getImageMetadataFromDataURL(loadUrl);
 
             const resizedImageDataURL = await resizeImageFromDataURL(loadUrl, sourceImageMetadata);
@@ -177,6 +184,8 @@ const Upload = () => {
                 name: "loaded"
             })
         } catch (e) {
+            console.error(e);
+
             // When error occurs when loading image from url we will try to load it again using HTML img element.
             // If this second attempt work we can be pretty sure that issue is in the CORS and we can show appropriate
             // error message to the user.
