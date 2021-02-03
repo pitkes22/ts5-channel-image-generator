@@ -258,8 +258,12 @@ const Upload = () => {
                                 setLoadUrl(e.target.value)
                             }}
                             placeholder="Image URL..."
-                            rightElement={<LoadButton loading={isUrlLoading} large={true}
-                                                      onClick={loadHandler}>Load</LoadButton>}
+                            rightElement={<LoadButton
+                                loading={isUrlLoading}
+                                large={true}
+                                onClick={loadHandler}
+                                disabled={loadUrl.length === 0}
+                            >Load</LoadButton>}
                             value={loadUrl}
                         />
                     </FormGroup>
