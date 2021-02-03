@@ -125,6 +125,8 @@ const Upload = () => {
     const uploadHandler = async (e) => {
         const file = e.target.files[0];
 
+        if (file == null) return;
+
         const dataURL = await fileToDataURL(file);
 
         const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
