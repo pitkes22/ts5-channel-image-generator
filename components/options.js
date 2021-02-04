@@ -53,7 +53,7 @@ const Options = () => {
                         min={0}
                         max={maxChannels}
                         stepSize={1}
-                        labelStepSize={maxChannels / 10}
+                        labelStepSize={Math.max(1, maxChannels / 10)}
                         onChange={(value) => setOption('slices', value)}
                         value={options.slices}
                         disabled={disabled}
