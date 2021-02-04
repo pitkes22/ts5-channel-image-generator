@@ -1,4 +1,5 @@
+const isProd = process.env.NODE_ENV === 'production'
+
 module.exports = {
-    // TODO: This has to be set so page will work on github pages url. But when used on localhost it fails to load images.
-    basePath: '/ts5-channel-image-generator',
+    basePath: isProd ? '/ts5-channel-image-generator' : '',
 }
