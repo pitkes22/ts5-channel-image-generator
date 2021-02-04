@@ -3,6 +3,13 @@ import styled from 'styled-components';
 import {Button} from "@blueprintjs/core";
 import {CHANNEL_DEPTH_OFFSET} from "./imageManipulation";
 
+
+const ControlsWrapper = styled.div`
+  position: absolute;
+  right: 0;
+  display: flex;
+`
+
 const RoomWrapper = styled.div`
   height: ${({$isSpacer}) => $isSpacer ? 26 : 30}px;
   margin-left: ${({$depthOffset}) => $depthOffset}px;
@@ -10,6 +17,18 @@ const RoomWrapper = styled.div`
   display: flex;
   align-items: center;
   position: relative;
+  
+  ${ControlsWrapper} {
+    transition: opacity 0.5s 0.5s;
+    opacity: 0.2;
+  }
+
+  &:hover {
+    ${ControlsWrapper} {
+      transition: opacity 0.25s;
+      opacity: 1;
+    }
+  }
 `
 
 const RoomContainer = styled.div`
@@ -79,12 +98,6 @@ const SpacerTitle = styled.span`
   text-align: center;
 `
 
-const ControlsWrapper = styled.div`
-  position: absolute;
-  right: 0;
-  display: flex;
-`
-
 const RoomButton = ({...other}) => (<Button
     // minimal={true}
     small={true}
@@ -96,11 +109,6 @@ const StyledRoomButton = styled(RoomButton)`
   zoom: 0.7;
   margin-right: 0.2em;
 `
-
-/*
-* Spacer: 26px wrapper size - 16px size of banner
-*
-* */
 
 /**
  * Renders one room in the preview. It should be rendered exactly the same way as in TeamSpeak 5 Client.

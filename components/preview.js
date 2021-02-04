@@ -5,14 +5,14 @@ import {ImageManipulationContext} from "./imageManipulation";
 const Preview = () => {
     let {results, rooms, setRooms} = useContext(ImageManipulationContext);
 
-    if (rooms.length < results.length) return <div>Loading...</div>; // TODO: Not really nice solution
-
     const updateNthRoom = (n, diff) => {
         setRooms(rooms.map((room, i) => {
             if (i !== n) return room;
             return {...room, ...diff}
         }))
     }
+
+    let roomsIndex = 1, spacersIndex = 1;
 
     return (
         <div>
@@ -24,7 +24,7 @@ const Preview = () => {
                     maxDepth = rooms[i - 1].depth + 1;
                 }
                 return <Room
-                    name={`Room #${i + 1}`}
+                    name={room.spacer ? `Spacer #${spacersIndex++}` : `Room #${roomsIndex++}`}
                     image={result}
                     key={i}
                     isSpacer={room.spacer}

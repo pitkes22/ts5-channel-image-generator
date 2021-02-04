@@ -1,22 +1,24 @@
 import React, {useEffect, useState} from 'react';
 import {throttle} from "lodash";
 
+export const SPACER_HEIGHT = 16;
+export const SPACER_BANNER_HEIGHT = 26;
 export const CHANNEL_HEIGHT = 22;
 export const CHANNEL_BANNER_HEIGHT = 30;
 export const CHANNEL_BANNER_WIDTH = 500;
 export const CHANNEL_DEPTH_OFFSET = 11;
 
-const defaultResults = [null, null, null, null, null]; // By default show 5 rooms without image
 const defaultRoom = {depth: 0, spacer: false};
 
 const initialValue = {
     options: {
-        slices: 5,
+        slices: 1,
         yOffset: 0,
+        xOffset: 0,
         ignoreSpacing: false
     },
-    results: defaultResults,
-    rooms: defaultResults.map(() => (defaultRoom)),
+    results: [null, null, null, null, null],  // By default show 5 rooms without image
+    rooms: new Array(256).fill(defaultRoom), // TODO: This creates arbitrary limit of maximum image size to 256 slices
     inputFile: {
         data: null,
         height: 30,
@@ -32,23 +34,48 @@ const initialValue = {
 export const ImageManipulationContext = React.createContext(initialValue);
 
 /**
- * Creates HTML canvas with image and returns reference to both
+ * Returns height of the channel based on channel type and options
  *
- * @param image URL of image
- * @param channelHeight height of the canvas (output)
- * @return {(HTMLCanvasElement|HTMLImageElement)[]}
+ * @param isSpacer
+ * @param ignoreSpacing
+ * @return {number}
  */
-function getCanvasAndImageWithImage(image, channelHeight) {
+const getChannelHeight = (isSpacer, ignoreSpacing) => isSpacer
+    ? ignoreSpacing ? SPACER_HEIGHT : SPACER_BANNER_HEIGHT
+    : ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT
+
+/**
+ * Creates HTML canvas of given size
+ *
+ * @return {HTMLCanvasElement}
+ */
+const getCanvas = () => {
+    if (typeof document === "undefined") return;
+
     const canvas = document.createElement('canvas')
 
-    canvas.width = CHANNEL_BANNER_WIDTH;
-    canvas.height = channelHeight;
+    canvas.width = 0;
+    canvas.height = 0;
 
-    const img = new Image();
-    img.src = image;
+    return canvas;
+}
 
-    // TODO: This should probably be asynchronous
-    return [canvas, img];
+/**
+ * Creates new image object and loads the image provided by url
+ *
+ * @param url Url to the image (can ba base64 data url)
+ * @return {Promise<unknown>}
+ */
+const getImage = async (url) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onerror = reject
+        img.onload = () => {
+            resolve(img)
+        }
+        img.src = url;
+    })
 }
 
 /**
@@ -63,26 +90,55 @@ function getCanvasAndImageWithImage(image, channelHeight) {
  * @param channelHeight Output height of the image
  * @return {string} Base64 encoded image (DataURL)
  */
-function getClippedRegion(canvas, img, x, y, width, height, channelHeight) {
+const getClippedRegion = (canvas, img, x, y, width, height, channelHeight) => {
+    canvas.width = CHANNEL_BANNER_WIDTH;
+    canvas.height = channelHeight;
+
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
     ctx.drawImage(img, x, y, width, height, 0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
 
     return canvas.toDataURL();
-}
+};
 
 /**
  * Returns maximum amount of slices that image can be sliced to
  *
  * @param width Width of the source image
  * @param height height of the source image
- * @param channelHeight Output height of the image
+ * @param rooms Array of room objects
+ * @param ignoreSpacing If true calculation will ignore channel spacing
  * @return {number} Number of slices
  */
-export const getSlicesCount = (width, height, channelHeight) => {
+export const getSlicesCount = (width, height, rooms, ignoreSpacing) => {
+    let count = 0;
+    let remainingHeight = height;
+
     const sizeRatio = width / CHANNEL_BANNER_WIDTH;
-    return ~~(height / (channelHeight * sizeRatio))
+
+    for (const room of rooms) {
+        const channelHeight = getChannelHeight(room.spacer, ignoreSpacing) * sizeRatio;
+        if (remainingHeight - channelHeight < 0) break;
+        remainingHeight -= channelHeight;
+        count++;
+    }
+
+    return count;
+}
+
+/**
+ * Returns total height of the all channels
+ *
+ * @param width
+ * @param height
+ * @param rooms
+ * @param ignoreSpacing
+ * @return {*}
+ */
+export const getRoomsHeight = (width, height, rooms, ignoreSpacing) => {
+    const sizeRatio = width / CHANNEL_BANNER_WIDTH;
+    return rooms.reduce((acc, room) => acc + getChannelHeight(room.spacer, ignoreSpacing) * sizeRatio)
 }
 
 /**
@@ -90,31 +146,38 @@ export const getSlicesCount = (width, height, channelHeight) => {
  *
  * @param inputFile Input file object containing base64URL encoded image data and image metadata (width, height, name)
  * @param options Options object providing values like number of output slices, height of the slice and vertical offset
- * @param cb Callback that will be called when images are generated (Promise API cant be used because we need to throttle this function)
+ * @param canvas Canvas Object to be used for image rendering
+ * @param image Reference to image object that contains image to render
+ * @param rooms Reference to rooms data from preview
+ * @param cb
  */
-const generateImages = (inputFile, options, cb) => {
-    const channelHeight = options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT;
-
+const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
     const sizeRatio = inputFile.width / CHANNEL_BANNER_WIDTH;
 
-    const slicesCount = getSlicesCount(inputFile.width, inputFile.height, channelHeight)
-
-    const [canvas, image] = getCanvasAndImageWithImage(inputFile.data, channelHeight);
+    const slicesCount = getSlicesCount(inputFile.width, inputFile.height, rooms, options.ignoreSpacing)
 
     const result = [];
-    for (let i = 0; i < options.slices; i++) {
+    let y = 0;
+    for (let i = 0; i < (options.slices - 1); i++) {
+        const room = rooms[i];
+        const xOffset = room.depth * CHANNEL_DEPTH_OFFSET;
+
+        const channelHeight = getChannelHeight(room.spacer, options.ignoreSpacing);
+
         result.push(getClippedRegion(
             canvas, image,
-            0, options.yOffset + (i * (channelHeight * sizeRatio)),
+            xOffset + options.xOffset, options.yOffset + y,
             inputFile.width, inputFile.height / slicesCount,
             channelHeight)
         )
+
+        y += channelHeight;
     }
     cb(result);
 }
 
 // Throttle time of the generateImage function. Should be approximately same as average time that it takes process average image.
-const THROTTLE_TIME = 100;
+const THROTTLE_TIME = 50;
 
 /**
  * Throttled (Using lodash throttle) generateImage function that is used to prevent generating unnecessarily to many
@@ -130,30 +193,41 @@ const ImageManipulation = ({children}) => {
     const [inputFile, setInputFile] = useState(initialValue.inputFile);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
     const [rooms, setRooms] = useState(initialValue.rooms);
+    const [image, setImage] = useState();
+
+    const [canvas, _] = useState(getCanvas())
+
+    // When input file is changed loads new image into canvas
+    useEffect(() => {
+        (async () => {
+                if (inputFile.data == null) return;
+                setImage(await getImage(inputFile.data));
+            }
+        )();
+    }, [inputFile])
+
 
     // When inputFile or options are changed it generates new result images
     useEffect(() => {
-        if (inputFile.data == null) return;
-        const start = Date.now();
-        setExportStatus((c) => ({...c, start: start, end: null}));
-        debouncedGenerateImage(inputFile, options, (results) => {
-            setResults(results)
-            const end = Date.now();
-            setExportStatus((c) => ({...c, end: end, delta: end - start}));
-        });
-    }, [inputFile, options])
+        (async () => {
+                if (inputFile.data == null || image == null) return;
 
-    // Keeps rooms array at the same minimal size as results array
-    useEffect(() => {
-        const maxEmpty = results.map(_ => defaultRoom)
-        setRooms([...rooms, ...maxEmpty.slice(0, results.length - rooms.length)]);
-    }, [results, inputFile, options])
+                const start = Date.now();
+                setExportStatus((c) => ({...c, start: start, end: null}));
+
+                debouncedGenerateImage(inputFile, options, canvas, image, rooms, (results) => {
+                    setResults(results);
+                    const end = Date.now();
+                    setExportStatus((c) => ({...c, end: end, delta: end - start}));
+                });
+            }
+        )();
+    }, [image, options, rooms])
 
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
-        const slices = getSlicesCount(inputFile.width, inputFile.height,
-            options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT);
-        setOptions((o) => ({...o, slices, yOffset: 0}))
+        const slices = getSlicesCount(inputFile.width, inputFile.height, rooms, options.ignoreSpacing);
+        setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0}))
     }, [inputFile])
 
     const value = {
