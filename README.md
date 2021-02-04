@@ -35,3 +35,6 @@ dependent on supported file formats of given browser.
 
 Any contribution is welcomed. 
 Feel free to create an issue if you found a bug, or you have an idea how to improve the app! 
+
+To run the app locally install the NPM dependencies and then run `npm run dev`. Currently, images does not work when 
+running locally due to the issue with URL prefix. To get around this comment out `basePath` property from `next.config.js`

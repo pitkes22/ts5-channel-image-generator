@@ -163,8 +163,8 @@ const Upload = () => {
         setIsUrlLoading(true);
 
         try {
-            // Tries to load image using fetch to get network error (primarily need to catch CORS events) that can be
-            // caught because when loading fails inside canvas it does not produce Exception.
+            // Tries to load image using fetch to get network error (primarily needed to catch CORS events) that can't
+            // be caught because when loading fails inside canvas it does not produce Exception.
             await fetch(loadUrl);
 
             // TODO: Instead of fetched image from the internet two times data from first fetch should be encoded to
