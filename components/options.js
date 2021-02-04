@@ -36,6 +36,10 @@ const Options = () => {
         if (options.yOffset > maxVerticalOffset) {
             setOption('yOffset', Math.min(options.yOffset, maxVerticalOffset));
         }
+
+        if (options.yOffset < 0) {
+            setOption('yOffset', 0);
+        }
     }, [options.slices, options.ignoreSpacing, maxChannels]);
 
     const setOption = (optionName, value) => setOptions((opt) => ({...opt, [optionName]: value}));
