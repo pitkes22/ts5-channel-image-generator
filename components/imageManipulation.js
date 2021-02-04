@@ -4,6 +4,10 @@ import {throttle} from "lodash";
 export const CHANNEL_HEIGHT = 22;
 export const CHANNEL_BANNER_HEIGHT = 30;
 export const CHANNEL_BANNER_WIDTH = 500;
+export const CHANNEL_DEPTH_OFFSET = 11;
+
+const defaultResults = [null, null, null, null, null]; // By default show 5 rooms without image
+const defaultRoom = {depth: 0, spacer: false};
 
 const initialValue = {
     options: {
@@ -11,7 +15,8 @@ const initialValue = {
         yOffset: 0,
         ignoreSpacing: false
     },
-    results: [null, null, null, null, null], // By default show 5 rooms without image
+    results: defaultResults,
+    rooms: defaultResults.map(() => (defaultRoom)),
     inputFile: {
         data: null,
         height: 30,
@@ -124,6 +129,7 @@ const ImageManipulation = ({children}) => {
     const [options, setOptions] = useState(initialValue.options);
     const [inputFile, setInputFile] = useState(initialValue.inputFile);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
+    const [rooms, setRooms] = useState(initialValue.rooms);
 
     // When inputFile or options are changed it generates new result images
     useEffect(() => {
@@ -136,6 +142,12 @@ const ImageManipulation = ({children}) => {
             setExportStatus((c) => ({...c, end: end, delta: end - start}));
         });
     }, [inputFile, options])
+
+    // Keeps rooms array at the same minimal size as results array
+    useEffect(() => {
+        const maxEmpty = results.map(_ => defaultRoom)
+        setRooms([...rooms, ...maxEmpty.slice(0, results.length - rooms.length)]);
+    }, [results, inputFile, options])
 
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
@@ -151,7 +163,9 @@ const ImageManipulation = ({children}) => {
         inputFile,
         setInputFile,
         exportStatus,
-        setExportStatus
+        setExportStatus,
+        rooms,
+        setRooms
     }
 
     return (
