@@ -1,8 +1,11 @@
 import React, {useContext, useEffect} from 'react';
 import Step from "./step";
 import {CHANNEL_BANNER_HEIGHT, CHANNEL_HEIGHT, getSlicesCount, ImageManipulationContext} from "./imageManipulation";
-import {FormGroup, Slider, Switch} from "@blueprintjs/core";
+import {FormGroup, Slider, Switch, Button, ButtonGroup} from "@blueprintjs/core";
+import { Popover2 } from "@blueprintjs/popover2";
+import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
 import styled from 'styled-components';
+import { ChromePicker } from 'react-color';
 
 const OptionsStep = styled(Step)`
   display: flex;
@@ -97,6 +100,42 @@ const Options = () => {
                         disabled={disabled}
                         large={true}
                     />
+                </FormGroup>
+
+                <FormGroup
+                    label="Custom background color"
+                    labelInfo={"(only applys to transparent images)"}
+                    helperText="Add your own custom background to transparent images"
+                    disabled={disabled}
+                >
+                    <ButtonGroup>
+                        <Popover2
+                            disabled={disabled}
+                            placement="top"
+                            hasBackdrop={true}
+                            minimal={false}
+                            content={
+                            <ChromePicker
+                                color={ options.backgroundColor }
+                                onChange={ (color) => {setOption('backgroundColor', color.rgb)} }
+                            />
+                          }
+                        >
+                            <Button
+                                text="Color Picker"
+                                disabled={disabled}
+                                onClick={() => {
+                                    if (!options.backgroundColor)
+                                        setOption('backgroundColor', {r: 255, g: 255, b: 255, a: 1})
+                                }}
+                            />
+                        </Popover2>
+                        <Button
+                            text="Remove"
+                            disabled={disabled}
+                            onClick={() => { setOption('backgroundColor', null) }}
+                        />
+                    </ButtonGroup>
                 </FormGroup>
             </Col>
         </OptionsStep>

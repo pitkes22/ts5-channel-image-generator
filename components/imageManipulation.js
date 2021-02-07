@@ -58,10 +58,14 @@ function getCanvasAndImageWithImage(image, channelHeight) {
  * @param channelHeight Output height of the image
  * @return {string} Base64 encoded image (DataURL)
  */
-function getClippedRegion(canvas, img, x, y, width, height, channelHeight) {
+function getClippedRegion(canvas, img, x, y, width, height, channelHeight, color) {
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+    if (color){
+        ctx.fillStyle = `rgba( ${ color.r }, ${ color.g }, ${ color.b }, ${ color.a })`
+        ctx.fillRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+    }
     ctx.drawImage(img, x, y, width, height, 0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
 
     return canvas.toDataURL();
@@ -102,7 +106,8 @@ const generateImages = (inputFile, options, cb) => {
             canvas, image,
             0, options.yOffset + (i * (channelHeight * sizeRatio)),
             inputFile.width, inputFile.height / slicesCount,
-            channelHeight)
+            channelHeight,
+            options.backgroundColor)
         )
     }
     cb(result);
