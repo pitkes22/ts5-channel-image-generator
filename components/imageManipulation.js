@@ -8,7 +8,7 @@ export const CHANNEL_BANNER_HEIGHT = 30;
 export const CHANNEL_BANNER_WIDTH = 500;
 export const CHANNEL_DEPTH_OFFSET = 11;
 
-const defaultRoom = {depth: 0, spacer: false};
+export const defaultRoom = {depth: 0, spacer: false};
 
 const initialValue = {
     options: {
@@ -113,9 +113,10 @@ const getClippedRegion = (canvas, img, x, y, width, height, channelHeight) => {
  */
 export const getSlicesCount = (width, height, rooms, ignoreSpacing) => {
     let count = 0;
-    let remainingHeight = height;
 
     const sizeRatio = width / CHANNEL_BANNER_WIDTH;
+
+    let remainingHeight = height * sizeRatio;
 
     for (const room of rooms) {
         const channelHeight = getChannelHeight(room.spacer, ignoreSpacing) * sizeRatio;
@@ -130,15 +131,21 @@ export const getSlicesCount = (width, height, rooms, ignoreSpacing) => {
 /**
  * Returns total height of the all channels
  *
- * @param width
- * @param height
- * @param rooms
- * @param ignoreSpacing
+ * @param width Width of the source image
+ * @param height height of the source image
+ * @param rooms Array of room objects
+ * @param ignoreSpacing If true calculation will ignore channel spacing
+ * @param channelsCount Maximum count of the channels (needed to prevent counting placeholder channels)
  * @return {*}
  */
-export const getRoomsHeight = (width, height, rooms, ignoreSpacing) => {
+export const getRoomsHeight = (width, height, rooms, ignoreSpacing, channelsCount) => {
+    const slicesCount = getSlicesCount(width, height, rooms, ignoreSpacing);
     const sizeRatio = width / CHANNEL_BANNER_WIDTH;
-    return rooms.reduce((acc, room) => acc + getChannelHeight(room.spacer, ignoreSpacing) * sizeRatio)
+    return rooms.reduce((acc, room, i) => {
+        if (i > slicesCount - 1) return acc;
+        if (channelsCount != null && i >= channelsCount) return acc;
+        return acc + (getChannelHeight(room.spacer, ignoreSpacing) * sizeRatio);
+    }, 0);
 }
 
 /**
@@ -158,7 +165,7 @@ const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
 
     const result = [];
     let y = 0;
-    for (let i = 0; i < (options.slices - 1); i++) {
+    for (let i = 0; i < options.slices; i++) {
         const room = rooms[i];
         const xOffset = room.depth * CHANNEL_DEPTH_OFFSET;
 
@@ -205,7 +212,6 @@ const ImageManipulation = ({children}) => {
             }
         )();
     }, [inputFile])
-
 
     // When inputFile or options are changed it generates new result images
     useEffect(() => {

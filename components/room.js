@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import {Button} from "@blueprintjs/core";
 import {CHANNEL_DEPTH_OFFSET} from "./imageManipulation";
@@ -47,7 +47,7 @@ const Image = styled.img`
   height: auto;
   object-fit: contain;
   object-position: 0 50%;
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 88px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - ${({$depthOffset}) => 44 * ($depthOffset + 1)}px), transparent 100%);
 `
 
 const ImageMask = styled.div`
@@ -126,8 +126,10 @@ const StyledRoomButton = styled(RoomButton)`
  * @constructor
  */
 const Room = ({name, image, isSpacer, setIsSpacer, onDepthUp, onDepthDown, depth, maxDepth, ...other}) => {
+    const depthOffset = depth * CHANNEL_DEPTH_OFFSET;
+
     return (
-        <RoomWrapper $isSpacer={isSpacer} $depthOffset={depth * CHANNEL_DEPTH_OFFSET} {...other}>
+        <RoomWrapper $isSpacer={isSpacer} $depthOffset={depthOffset} {...other}>
             <RoomContent>
                 {!isSpacer && <RoomIcon>
                     <img src={`roomIcon.svg`} alt={'Room Icon'}/>
@@ -142,7 +144,7 @@ const Room = ({name, image, isSpacer, setIsSpacer, onDepthUp, onDepthDown, depth
                 </ControlsWrapper>
             </RoomContent>
             <RoomContainer $isSpacer={isSpacer}>
-                {image && <Image src={image} alt="Banner Fragment"/>}
+                {image && <Image src={image} alt="Banner Fragment" $depthOffset={depth}/>}
                 {image && <ImageMask $isSpacer={isSpacer}/>}
             </RoomContainer>
         </RoomWrapper>
