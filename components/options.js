@@ -1,12 +1,11 @@
 import React, {useContext, useEffect} from 'react';
 import Step from "./step";
-import {CHANNEL_BANNER_HEIGHT, CHANNEL_HEIGHT, getSlicesCount, ImageManipulationContext, getRoomsHeight} from "./imageManipulation";
-import {FormGroup, Slider, Switch, Button, ButtonGroup} from "@blueprintjs/core";
-import { Popover2 } from "@blueprintjs/popover2";
+import {CHANNEL_BANNER_WIDTH, getRoomsHeight, getSlicesCount, ImageManipulationContext} from "./imageManipulation";
+import {Button, ButtonGroup, FormGroup, Slider, Switch} from "@blueprintjs/core";
+import {Popover2} from "@blueprintjs/popover2";
 import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
-import {Button, FormGroup, Slider, Switch} from "@blueprintjs/core";
 import styled from 'styled-components';
-import { ChromePicker } from 'react-color';
+import {ChromePicker} from 'react-color';
 
 const OptionsStep = styled(Step)`
   display: flex;
