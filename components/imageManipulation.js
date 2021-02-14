@@ -126,15 +126,21 @@ const getImage = async (url) => {
  * @param width Width of the source image
  * @param height height of the source image
  * @param channelHeight Output height of the image
+ * @param color Background color of the canvas (visible when drawing dransparent images)
  * @return {string} Base64 encoded image (DataURL)
  */
-const getClippedRegion = (canvas, img, x, y, width, height, channelHeight) => {
+
+const getClippedRegion = (canvas, img, x, y, width, height, channelHeight, color) => {
     canvas.width = CHANNEL_BANNER_WIDTH;
     canvas.height = channelHeight;
-
+  
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+    if (color){
+        ctx.fillStyle = `rgba( ${ color.r }, ${ color.g }, ${ color.b }, ${ color.a })`
+        ctx.fillRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+    }
     ctx.drawImage(img, x, y, width, height, 0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
 
     return canvas.toDataURL();
@@ -213,7 +219,8 @@ const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
             canvas, image,
             xOffset + options.xOffset, options.yOffset + y,
             inputFile.width, inputFile.height / slicesCount,
-            channelHeight)
+            channelHeight,
+            options.backgroundColor)
         )
 
         y += channelHeight;
