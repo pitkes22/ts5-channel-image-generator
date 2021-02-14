@@ -47,7 +47,7 @@ const Image = styled.img`
   height: auto;
   object-fit: contain;
   object-position: 0 50%;
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - ${({$depthOffset}) => 44 * ($depthOffset + 1)}px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 88px), transparent 100%);
 `
 
 const ImageMask = styled.div`
@@ -59,8 +59,8 @@ const ImageMask = styled.div`
   bottom: 0;
   border-radius: var(--tsv-border-radius);
   background: ${({$isSpacer}) => $isSpacer
-          ? 'linear-gradient(to right, transparent 0%, #131824 45% 55%, transparent 100%)'
-          : 'linear-gradient(to right, transparent 0%, #131824 22px 60%, transparent 100%)'};
+    ? 'linear-gradient(to right, transparent 0%, #131824 45% 55%, transparent 100%)'
+    : 'linear-gradient(to right, transparent 0%, #131824 22px 60%, transparent 100%)'};
 `
 
 const RoomContent = styled.div`

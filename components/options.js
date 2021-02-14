@@ -19,14 +19,14 @@ const Col = styled.div`
 `
 
 const Options = () => {
-    const {options, setOptions, inputFile, rooms} = useContext(ImageManipulationContext);
+    const {options, setOptions, image, rooms} = useContext(ImageManipulationContext);
 
-    const sizeRatio = inputFile.width / CHANNEL_BANNER_WIDTH;
+    const sizeRatio = image.width / CHANNEL_BANNER_WIDTH;
 
-    const maxChannels = getSlicesCount(inputFile.width, inputFile.height, rooms, options.ignoreSpacing);
-    const maxVerticalOffset = inputFile.height - getRoomsHeight(inputFile.width, inputFile.height, rooms, options.ignoreSpacing, options.slices);
+    const maxChannels = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
+    const maxVerticalOffset = image.height - getRoomsHeight(image.width, image.height, rooms, options.ignoreSpacing, options.slices);
 
-    const disabled = inputFile.data == null;
+    const disabled = image.data == null;
 
     // When options are change check if current values are still valid and if not calculate new values for them
     useEffect(() => {
@@ -81,6 +81,23 @@ const Options = () => {
                         disabled={disabled || maxVerticalOffset === 0}
                     />
                 </FormGroup>
+
+                <FormGroup
+                    label="Fit mode"
+                    labelInfo={"(behavior of image when stretch over nested channels)"}
+                    helperText="If cover mode is used image will be stretch over nested channels. Otherwise it will be aligned to left with fixed width"
+                    disabled={disabled}
+                >
+                    <Switch
+                        innerLabel={'Contain'}
+                        innerLabelChecked={'Cover'}
+                        checked={options.coverFitMode}
+                        label="Image Fit Mode"
+                        onChange={() => setOption('coverFitMode', !options.coverFitMode)}
+                        disabled={disabled}
+                        large={true}
+                    />
+                </FormGroup>
             </Col>
             <Col>
                 <FormGroup
@@ -115,10 +132,10 @@ const Options = () => {
                 >
                     <Slider
                         showTrackFill={options.xOffset !== 0}
-                        min={-inputFile.width}
-                        max={inputFile.width}
-                        stepSize={inputFile.width / 100}
-                        labelStepSize={inputFile.width / 5}
+                        min={-image.width}
+                        max={image.width}
+                        stepSize={image.width / 100}
+                        labelStepSize={image.width / 5}
                         onChange={(value) => setOption('xOffset', value)}
                         value={options.xOffset}
                         disabled={disabled}

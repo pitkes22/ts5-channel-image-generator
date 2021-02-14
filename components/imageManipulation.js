@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {throttle} from "lodash";
+import {getImageMetadataFromDataURL} from "./upload";
 
 export const SPACER_HEIGHT = 16;
 export const SPACER_BANNER_HEIGHT = 26;
@@ -15,12 +16,20 @@ const initialValue = {
         slices: 1,
         yOffset: 0,
         xOffset: 0,
-        ignoreSpacing: false
+        ignoreSpacing: false,
+        coverFitMode: true,
     },
     results: [null, null, null, null, null],  // By default show 5 rooms without image
     rooms: new Array(256).fill(defaultRoom), // TODO: This creates arbitrary limit of maximum image size to 256 slices
-    inputFile: {
+    sourceImage: {
         data: null,
+        name: null,
+        height: 30,
+        width: 100
+    },
+    image: {
+        data: null,
+        name: null,
         height: 30,
         width: 100
     },
@@ -32,6 +41,35 @@ const initialValue = {
 }
 
 export const ImageManipulationContext = React.createContext(initialValue);
+
+/**
+ * Resizes image to maxWidth specified by the parameter.
+ *
+ * @param url URL of the image to be scaled down
+ * @param metadata Metadata of the image
+ * @param width Target max width of the result image
+ * @return {Promise<unknown>}
+ */
+export const resizeImageFromDataURL = async (url, metadata, width) => {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = width;
+        canvas.height = metadata.height * (width / metadata.width);
+
+        const img = new Image();
+
+        img.crossOrigin = "Anonymous"
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, metadata.width, metadata.height, 0, 0, canvas.width, canvas.height);
+
+            resolve(canvas.toDataURL());
+        }
+
+        img.src = url;
+    })
+}
 
 /**
  * Returns height of the channel based on channel type and options
@@ -195,55 +233,74 @@ const THROTTLE_TIME = 50;
 const debouncedGenerateImage = throttle(generateImages, THROTTLE_TIME);
 
 const ImageManipulation = ({children}) => {
+    const [sourceImage, setSourceImage] = useState(initialValue.sourceImage);
+    const [rooms, setRooms] = useState(initialValue.rooms);
     const [results, setResults] = useState(initialValue.results);
     const [options, setOptions] = useState(initialValue.options);
-    const [inputFile, setInputFile] = useState(initialValue.inputFile);
+    const [image, setImage] = useState(initialValue.image);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
-    const [rooms, setRooms] = useState(initialValue.rooms);
-    const [image, setImage] = useState();
+    const [imageObject, setImageObject] = useState();
 
     const [canvas, _] = useState(getCanvas())
 
-    // When input file is changed loads new image into canvas
+    // When source image is changed loads new imageObject into canvas
     useEffect(() => {
         (async () => {
-                if (inputFile.data == null) return;
-                setImage(await getImage(inputFile.data));
+                if (sourceImage.data == null) return;
+
+
+                const resizedImage = await resizeImageFromDataURL(
+                    sourceImage.data,
+                    {width: sourceImage.width, height: sourceImage.height},
+                    500
+                );
+
+                const resizedImageMetadata = await getImageMetadataFromDataURL(resizedImage)
+
+                setImage({
+                    data: resizedImage,
+                    width: resizedImageMetadata.width,
+                    height: resizedImageMetadata.height,
+                    name: sourceImage.name
+                });
+                setImageObject(await getImage(resizedImage));
             }
         )();
-    }, [inputFile])
+    }, [sourceImage])
 
     // When inputFile or options are changed it generates new result images
     useEffect(() => {
         (async () => {
-                if (inputFile.data == null || image == null) return;
+                if (imageObject == null) return;
 
                 const start = Date.now();
                 setExportStatus((c) => ({...c, start: start, end: null}));
 
-                debouncedGenerateImage(inputFile, options, canvas, image, rooms, (results) => {
+                debouncedGenerateImage(image, options, canvas, imageObject, rooms, (results) => {
                     setResults(results);
                     const end = Date.now();
                     setExportStatus((c) => ({...c, end: end, delta: end - start}));
                 });
             }
         )();
-    }, [image, options, rooms])
+    }, [imageObject, options, rooms])
 
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
-        const slices = getSlicesCount(inputFile.width, inputFile.height, rooms, options.ignoreSpacing);
+        const slices = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
         setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0}))
-    }, [inputFile])
+    }, [image])
 
     const value = {
         results,
         options,
         setOptions,
-        inputFile,
-        setInputFile,
+        image,
+        setImage,
         exportStatus,
         setExportStatus,
+        sourceImage,
+        setSourceImage,
         rooms,
         setRooms
     }
