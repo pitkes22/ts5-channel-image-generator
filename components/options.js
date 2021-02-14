@@ -1,9 +1,10 @@
 import React, {useContext, useEffect} from 'react';
 import Step from "./step";
-import {CHANNEL_BANNER_HEIGHT, CHANNEL_HEIGHT, getSlicesCount, ImageManipulationContext} from "./imageManipulation";
+import {CHANNEL_BANNER_HEIGHT, CHANNEL_HEIGHT, getSlicesCount, ImageManipulationContext, getRoomsHeight} from "./imageManipulation";
 import {FormGroup, Slider, Switch, Button, ButtonGroup} from "@blueprintjs/core";
 import { Popover2 } from "@blueprintjs/popover2";
 import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
+import {Button, FormGroup, Slider, Switch} from "@blueprintjs/core";
 import styled from 'styled-components';
 import { ChromePicker } from 'react-color';
 
@@ -22,13 +23,14 @@ const Col = styled.div`
 `
 
 const Options = () => {
-    const {options, setOptions, inputFile} = useContext(ImageManipulationContext);
-    const channelHeight = options.ignoreSpacing ? CHANNEL_HEIGHT : CHANNEL_BANNER_HEIGHT;
+    const {options, setOptions, image, rooms} = useContext(ImageManipulationContext);
 
-    const maxChannels = getSlicesCount(inputFile.width, inputFile.height, channelHeight);
-    const maxVerticalOffset = inputFile.height - options.slices * channelHeight;
+    const sizeRatio = image.width / CHANNEL_BANNER_WIDTH;
 
-    const disabled = inputFile.data == null;
+    const maxChannels = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
+    const maxVerticalOffset = image.height - getRoomsHeight(image.width, image.height, rooms, options.ignoreSpacing, options.slices);
+
+    const disabled = image.data == null;
 
     // When options are change check if current values are still valid and if not calculate new values for them
     useEffect(() => {
@@ -57,7 +59,7 @@ const Options = () => {
                     disabled={disabled}
                 >
                     <Slider
-                        min={0}
+                        min={1}
                         max={maxChannels}
                         stepSize={1}
                         labelStepSize={Math.max(1, maxChannels / 10)}
@@ -71,16 +73,33 @@ const Options = () => {
                     label="Vertical offset"
                     labelInfo={"(Moves image up and down)"}
                     helperText="Chose position of the image. You can get more freedom by setting lower number of channels"
-                    disabled={disabled}
+                    disabled={disabled || maxVerticalOffset === 0}
                 >
                     <Slider
                         min={0}
-                        max={maxVerticalOffset}
+                        max={Math.max(1, maxVerticalOffset)}
                         stepSize={1}
-                        labelStepSize={~~(inputFile.height / 10)}
+                        labelStepSize={Math.max(1, ~~(maxVerticalOffset / 10))}
                         onChange={(value) => setOption('yOffset', value)}
                         value={options.yOffset}
+                        disabled={disabled || maxVerticalOffset === 0}
+                    />
+                </FormGroup>
+
+                <FormGroup
+                    label="Fit mode"
+                    labelInfo={"(behavior of image when stretch over nested channels)"}
+                    helperText="If cover mode is used image will be stretch over nested channels. Otherwise it will be aligned to left with fixed width"
+                    disabled={disabled}
+                >
+                    <Switch
+                        innerLabel={'Contain'}
+                        innerLabelChecked={'Cover'}
+                        checked={options.coverFitMode}
+                        label="Image Fit Mode"
+                        onChange={() => setOption('coverFitMode', !options.coverFitMode)}
                         disabled={disabled}
+                        large={true}
                     />
                 </FormGroup>
             </Col>
@@ -136,6 +155,33 @@ const Options = () => {
                             onClick={() => { setOption('backgroundColor', null) }}
                         />
                     </ButtonGroup>
+                </FormGroup>
+
+                <FormGroup
+                    labelFor={'none'}
+                    label="Horizontal offset"
+                    labelInfo={<>
+                        (Moves image right and left) <Button
+                            icon={'reset'}
+                            small={true}
+                            outlined={true}
+                            onClick={() => setOption('xOffset', 0)}
+                        >Reset</Button>
+                    </>}
+                    helperText="Horizontal offset of the image. Primarily useful for images with transparent background."
+                    disabled={disabled}
+                >
+                    <Slider
+                        showTrackFill={options.xOffset !== 0}
+                        min={-image.width}
+                        max={image.width}
+                        stepSize={image.width / 100}
+                        labelStepSize={image.width / 5}
+                        onChange={(value) => setOption('xOffset', value)}
+                        value={options.xOffset}
+                        disabled={disabled}
+                    />
+
                 </FormGroup>
             </Col>
         </OptionsStep>

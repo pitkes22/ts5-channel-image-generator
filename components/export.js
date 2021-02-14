@@ -6,7 +6,7 @@ import * as JSZip from "jszip";
 import {saveAs} from "file-saver";
 
 const Export = () => {
-    const {exportStatus, results, inputFile} = useContext(ImageManipulationContext);
+    const {exportStatus, results, sourceImage} = useContext(ImageManipulationContext);
     const [fileNamePrefix, setFileNamePrefix] = useState('');
     const [exportProgress, setExportProgress] = useState(null);
     const [exportTimeDelta, setExportTimeDelta] = useState(null);
@@ -17,7 +17,7 @@ const Export = () => {
     const previewTimeDeltaStr = exportStatus.delta == null ? 'N/A' : `${exportStatus.delta}ms`;
     const exportTimeDeltaStr = exportTimeDelta == null ? 'N/A' : `${exportTimeDelta}ms`;
 
-    const disabled = inputFile.data == null;
+    const disabled = sourceImage.data == null;
 
     // When new results are generated invalidates current export
     useEffect(() => {
@@ -56,7 +56,7 @@ const Export = () => {
 
         setExportProgress(0.8);
 
-        saveAs(blob, `ts5_channel_banner_${inputFile.name}.zip`)
+        saveAs(blob, `ts5_channel_banner_${sourceImage.name}.zip`)
 
         setExportProgress(1);
         setExportTimeDelta(Date.now() - start);
