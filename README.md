@@ -25,15 +25,16 @@ dependent on supported file formats of given browser.
 
 ## 📅 Planned Features 
 
-- [ ] Support for spacers
-- [ ] Support for nested channels
-- [ ] Support for animated banners (GIFs)
-- [ ] Support for specifying background color for transparent banners
 - [ ] Basic image manipulation (Flip, Offset, Scale)
-- [ ] Drag support for nested channels
 - [ ] Rooms Structure serialization and persistence in local storage
-- [ ] An uploaded image persistence in local storage
-- [ ] Add "Cover" mode (stretch image over nested rooms)
+- [ ] Drag support for nested channels
+- [ ] Create a new logo (**Help wanted!**) and manifest file to make the app PWA 
+- [ ] Make an uploaded image saved in local storage
+- [ ] Support for animated banners (GIFs)
+- [X] Support for spacers
+- [X] Support for nested channels
+- [X] Support for specifying background color for transparent banners
+- [X] Add "Cover" mode (stretch image over nested rooms)
 
 ## 🍰 Contributing
 
