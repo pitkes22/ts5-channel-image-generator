@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect} from 'react';
 import Room from "./room";
 import {defaultRoom, ImageManipulationContext} from "./imageManipulation";
 import {Button, Callout} from "@blueprintjs/core";
@@ -26,11 +26,30 @@ const ScrollWrapper = styled.div`
 const Preview = () => {
     let {results, rooms, setRooms} = useContext(ImageManipulationContext);
 
+    useEffect(() => {
+        rooms.forEach((room, i) => {
+            if (rooms.length < 2) return;
+
+        })
+    }, [rooms]);
+
     const updateNthRoom = (n, diff) => {
-        setRooms(rooms.map((room, i) => {
+        let newRooms = rooms.map((room, i) => {
             if (i !== n) return room;
             return {...room, ...diff}
-        }))
+        });
+
+        newRooms.forEach((room, i) => {
+            if (i === 0) return;
+
+            const prevRoom = newRooms[i - 1];
+
+            if (room.depth - prevRoom.depth > 1) {
+                newRooms[i] = {...room, depth: room.depth - 1}
+            }
+        })
+
+        setRooms(newRooms);
     }
 
     const resetAllRooms = () => setRooms(rooms.map((room, i) => defaultRoom));

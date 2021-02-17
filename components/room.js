@@ -17,6 +17,7 @@ const RoomWrapper = styled.div`
   display: flex;
   align-items: center;
   position: relative;
+  user-select: none;
   
   ${ControlsWrapper} {
     transition: opacity 0.5s 0.5s;

@@ -2,7 +2,7 @@ import React, {useContext, useState} from 'react';
 import Step from "./step";
 import {Button, Callout, Code, FileInput, FormGroup, Icon, InputGroup} from "@blueprintjs/core";
 import styled from 'styled-components';
-import {ImageManipulationContext, resizeImageFromDataURL} from "./imageManipulation";
+import {ImageManipulationContext} from "./imageManipulation";
 import {toaster} from "../pages";
 
 const ImagePreview = styled.img`
@@ -104,7 +104,7 @@ const Upload = () => {
     const {sourceImage, setSourceImage} = useContext(ImageManipulationContext);
     const [loadUrl, setLoadUrl] = useState("");
     const [isUrlLoading, setIsUrlLoading] = useState(false);
-    
+
     /**
      * Handles uploading of the image using file input form
      *
@@ -240,8 +240,13 @@ const Upload = () => {
                 </Col>
             </Col>
             <Col $width={'250px'} style={{justifyContent: 'flex-end'}}>
-                {sourceImage.data ? <ImagePreview src={sourceImage.data} alt="Image Preview"/> :
-                    <ImagePreviewPlaceholder><Icon icon={"media"} iconSize={50}/></ImagePreviewPlaceholder>}
+                {
+                    sourceImage.data
+                        ? <ImagePreview src={sourceImage.data} alt="Image Preview"/>
+                        : <ImagePreviewPlaceholder>
+                            <Icon icon={"media"} iconSize={50}/>
+                        </ImagePreviewPlaceholder>
+                }
             </Col>
         </UploadStep>
     );

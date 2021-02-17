@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {throttle} from "lodash";
+import React, {useEffect, useRef, useState} from 'react';
+import {memoize, throttle} from "lodash";
 import {getImageMetadataFromDataURL} from "./upload";
 
 export const SPACER_HEIGHT = 16;
@@ -18,6 +18,7 @@ const initialValue = {
         xOffset: 0,
         ignoreSpacing: false,
         coverFitMode: true,
+        backgroundColor: '#00000000',
     },
     results: [null, null, null, null, null],  // By default show 5 rooms without image
     rooms: new Array(256).fill(defaultRoom), // TODO: This creates arbitrary limit of maximum image size to 256 slices
@@ -62,7 +63,11 @@ export const resizeImageFromDataURL = async (url, metadata, width) => {
 
         img.crossOrigin = "Anonymous"
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, metadata.width, metadata.height, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(
+                img,
+                0, 0, metadata.width, metadata.height,
+                0, 0, canvas.width, canvas.height
+            );
 
             resolve(canvas.toDataURL());
         }
@@ -133,15 +138,21 @@ const getImage = async (url) => {
 const getClippedRegion = (canvas, img, x, y, width, height, channelHeight, color) => {
     canvas.width = CHANNEL_BANNER_WIDTH;
     canvas.height = channelHeight;
-  
+
+    console.log('Rendering');
+
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
-    if (color){
-        ctx.fillStyle = `rgba( ${ color.r }, ${ color.g }, ${ color.b }, ${ color.a })`
-        ctx.fillRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
-    }
-    ctx.drawImage(img, x, y, width, height, 0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, CHANNEL_BANNER_WIDTH, channelHeight);
+
+    ctx.drawImage(
+        img,
+        x, y, CHANNEL_BANNER_WIDTH, height,
+        0, 0, CHANNEL_BANNER_WIDTH, channelHeight
+    );
 
     return canvas.toDataURL();
 };
@@ -203,10 +214,6 @@ export const getRoomsHeight = (width, height, rooms, ignoreSpacing, channelsCoun
  * @param cb
  */
 const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
-    const sizeRatio = inputFile.width / CHANNEL_BANNER_WIDTH;
-
-    const slicesCount = getSlicesCount(inputFile.width, inputFile.height, rooms, options.ignoreSpacing)
-
     const result = [];
     let y = 0;
     for (let i = 0; i < options.slices; i++) {
@@ -217,8 +224,8 @@ const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
 
         result.push(getClippedRegion(
             canvas, image,
-            xOffset + options.xOffset, options.yOffset + y,
-            inputFile.width, inputFile.height / slicesCount,
+            xOffset - options.xOffset, options.yOffset + y,
+            inputFile.width, channelHeight,
             channelHeight,
             options.backgroundColor)
         )
@@ -227,6 +234,7 @@ const generateImages = (inputFile, options, canvas, image, rooms, cb) => {
     }
     cb(result);
 }
+
 
 // Throttle time of the generateImage function. Should be approximately same as average time that it takes process average image.
 const THROTTLE_TIME = 50;
@@ -239,6 +247,21 @@ const THROTTLE_TIME = 50;
  */
 const debouncedGenerateImage = throttle(generateImages, THROTTLE_TIME);
 
+/**
+ * Memoized resizeImageFromDataURL function that will only render new resized image only first time.
+ *
+ * TODO: Invalidate cache when new source image is set
+ *
+ * @type {(function(*, *=, *): Promise<unknown>) & MemoizedFunction}
+ */
+const memoizedResizeImageFromDataURL = memoize(
+    resizeImageFromDataURL,
+    (url, metadata, width) => JSON.stringify({
+        url,
+        metadata,
+        width
+    }));
+
 const ImageManipulation = ({children}) => {
     const [sourceImage, setSourceImage] = useState(initialValue.sourceImage);
     const [rooms, setRooms] = useState(initialValue.rooms);
@@ -247,6 +270,7 @@ const ImageManipulation = ({children}) => {
     const [image, setImage] = useState(initialValue.image);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
     const [imageObject, setImageObject] = useState();
+    const lastSourceImage = useRef(null);
 
     const [canvas, _] = useState(getCanvas())
 
@@ -254,15 +278,22 @@ const ImageManipulation = ({children}) => {
     useEffect(() => {
         (async () => {
                 if (sourceImage.data == null) return;
+                const start = Date.now();
+                setExportStatus((c) => ({...c, start: start, end: null}));
 
+                const maxRoomDepth = rooms.reduce((acc, cur) => cur.depth > acc ? cur.depth : acc, 0);
 
-                const resizedImage = await resizeImageFromDataURL(
+                const imageWidth = options.coverFitMode
+                    ? CHANNEL_BANNER_WIDTH + (maxRoomDepth * CHANNEL_DEPTH_OFFSET)
+                    : CHANNEL_BANNER_WIDTH
+
+                const resizedImage = await memoizedResizeImageFromDataURL(
                     sourceImage.data,
                     {width: sourceImage.width, height: sourceImage.height},
-                    500
+                    imageWidth
                 );
 
-                const resizedImageMetadata = await getImageMetadataFromDataURL(resizedImage)
+                const resizedImageMetadata = await getImageMetadataFromDataURL(resizedImage);
 
                 setImage({
                     data: resizedImage,
@@ -271,9 +302,11 @@ const ImageManipulation = ({children}) => {
                     name: sourceImage.name
                 });
                 setImageObject(await getImage(resizedImage));
+                const end = Date.now();
+                setExportStatus((c) => ({...c, end: end, delta: end - start}));
             }
         )();
-    }, [sourceImage])
+    }, [sourceImage, rooms, options.coverFitMode])
 
     // When inputFile or options are changed it generates new result images
     useEffect(() => {
@@ -290,12 +323,14 @@ const ImageManipulation = ({children}) => {
                 });
             }
         )();
-    }, [imageObject, options, rooms])
+    }, [imageObject, options, image])
 
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
+        if (lastSourceImage.current === sourceImage) return;
         const slices = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
         setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0}))
+        lastSourceImage.current = sourceImage;
     }, [image])
 
     const value = {
