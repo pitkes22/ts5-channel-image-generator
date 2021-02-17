@@ -2,7 +2,7 @@ import React, {useContext, useState} from 'react';
 import Step from "./step";
 import {Button, Callout, Code, FileInput, FormGroup, Icon, InputGroup} from "@blueprintjs/core";
 import styled from 'styled-components';
-import {CHANNEL_BANNER_WIDTH, ImageManipulationContext} from "./imageManipulation";
+import {ImageManipulationContext} from "./imageManipulation";
 import {toaster} from "../pages";
 
 const ImagePreview = styled.img`
@@ -46,6 +46,12 @@ const LoadButton = styled(Button)`
   width: 85px;
 `
 
+/**
+ * Loads image from url using image HTML element (used for testing CORS issues)
+ *
+ * @param src
+ * @return {Promise<unknown>}
+ */
 const loadCrossOriginImage = (src) => {
     return new Promise(((resolve, reject) => {
         const imageElement = document.createElement('img');
@@ -55,77 +61,49 @@ const loadCrossOriginImage = (src) => {
     }))
 }
 
+/**
+ * Converts File blob to Data URL
+ *
+ * @param file Blob
+ * @return {Promise<unknown>}
+ */
+const fileToDataURL = (file) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            resolve(e.target.result)
+        }
+        reader.readAsDataURL(file);
+    })
+}
+
+/**
+ * Export metadata (width, height) from the image specified by URL
+ *
+ * @param url URL of the image
+ * @return {Promise<unknown>}
+ */
+export const getImageMetadataFromDataURL = (url) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onerror = reject
+        img.onload = () => {
+            resolve({
+                width: img.width,
+                height: img.height,
+            })
+        }
+        // img.crossOrigin = "Anonymous"
+        img.src = url;
+    })
+}
+
+
 const Upload = () => {
-    const {inputFile, setInputFile} = useContext(ImageManipulationContext);
+    const {sourceImage, setSourceImage} = useContext(ImageManipulationContext);
     const [loadUrl, setLoadUrl] = useState("");
     const [isUrlLoading, setIsUrlLoading] = useState(false);
-
-    /**
-     * Converts File blob to Data URL
-     *
-     * @param file Blob
-     * @return {Promise<unknown>}
-     */
-    const fileToDataURL = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                resolve(e.target.result)
-            }
-            reader.readAsDataURL(file);
-        })
-    }
-
-    /**
-     * Resizes image to maxWidth specified by value of CHANNEL_BANNER_WIDTH constant. This is done to scale done image
-     * to the maximum useful resolution at the beginning to prevent unnecessary work when working with big images.
-     *
-     * @param url URL of the image to be scaled down
-     * @param metadata Metadata of the image
-     * @return {Promise<unknown>}
-     */
-    const resizeImageFromDataURL = async (url, metadata) => {
-        return new Promise((resolve, reject) => {
-            const canvas = document.createElement('canvas')
-            const ctx = canvas.getContext('2d');
-
-            canvas.width = CHANNEL_BANNER_WIDTH;
-            canvas.height = metadata.height * (CHANNEL_BANNER_WIDTH / metadata.width);
-
-            const img = new Image();
-
-            img.crossOrigin = "Anonymous"
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0, metadata.width, metadata.height, 0, 0, canvas.width, canvas.height);
-
-                resolve(canvas.toDataURL());
-            }
-
-            img.src = url;
-        })
-    }
-
-    /**
-     * Export metadata (width, height) from the image specified by URL
-     *
-     * @param url URL of the image
-     * @return {Promise<unknown>}
-     */
-    const getImageMetadataFromDataURL = (url) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-
-            img.onerror = reject
-            img.onload = () => {
-                resolve({
-                    width: img.width,
-                    height: img.height,
-                })
-            }
-            // img.crossOrigin = "Anonymous"
-            img.src = url;
-        })
-    }
 
     /**
      * Handles uploading of the image using file input form
@@ -140,14 +118,10 @@ const Upload = () => {
 
         const dataURL = await fileToDataURL(file);
 
-        const sourceImageMetadata = await getImageMetadataFromDataURL(dataURL);
+        const metadata = await getImageMetadataFromDataURL(dataURL);
 
-        const resizedImageDataURL = await resizeImageFromDataURL(dataURL, sourceImageMetadata);
-
-        const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
-
-        setInputFile({
-            data: resizedImageDataURL,
+        setSourceImage({
+            data: dataURL,
             width: metadata.width,
             height: metadata.height,
             name: file.name
@@ -170,14 +144,10 @@ const Upload = () => {
             // TODO: Instead of fetched image from the internet two times data from first fetch should be encoded to
             //  base64URL and then used to process image
 
-            const sourceImageMetadata = await getImageMetadataFromDataURL(loadUrl);
-
-            const resizedImageDataURL = await resizeImageFromDataURL(loadUrl, sourceImageMetadata);
-
-            const metadata = await getImageMetadataFromDataURL(resizedImageDataURL);
+            const metadata = await getImageMetadataFromDataURL(loadUrl);
 
             setIsUrlLoading(false);
-            setInputFile({
+            setSourceImage({
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
@@ -237,7 +207,7 @@ const Upload = () => {
                                 accept: 'image/*'
                             }}
                             id={'file-input'}
-                            text={inputFile.name ?? 'Choose file...'}
+                            text={sourceImage.name ?? 'Choose file...'}
                             onInputChange={uploadHandler}
                             large={true}
                         />
@@ -270,8 +240,13 @@ const Upload = () => {
                 </Col>
             </Col>
             <Col $width={'250px'} style={{justifyContent: 'flex-end'}}>
-                {inputFile.data ? <ImagePreview src={inputFile.data} alt="Image Preview"/> :
-                    <ImagePreviewPlaceholder><Icon icon={"media"} iconSize={50}/></ImagePreviewPlaceholder>}
+                {
+                    sourceImage.data
+                        ? <ImagePreview src={sourceImage.data} alt="Image Preview"/>
+                        : <ImagePreviewPlaceholder>
+                            <Icon icon={"media"} iconSize={50}/>
+                        </ImagePreviewPlaceholder>
+                }
             </Col>
         </UploadStep>
     );

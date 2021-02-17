@@ -30,6 +30,10 @@ dependent on supported file formats of given browser.
 - [ ] Support for animated banners (GIFs)
 - [ ] Support for specifying background color for transparent banners
 - [ ] Basic image manipulation (Flip, Offset, Scale)
+- [ ] Drag support for nested channels
+- [ ] Rooms Structure serialization and persistence in local storage
+- [ ] An uploaded image persistence in local storage
+- [ ] Add "Cover" mode (stretch image over nested rooms)
 
 ## 🍰 Contributing
 

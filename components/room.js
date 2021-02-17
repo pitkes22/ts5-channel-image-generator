@@ -1,18 +1,41 @@
 import React from 'react';
 import styled from 'styled-components';
+import {Button} from "@blueprintjs/core";
+import {CHANNEL_DEPTH_OFFSET} from "./imageManipulation";
+
+
+const ControlsWrapper = styled.div`
+  position: absolute;
+  right: 0;
+  display: flex;
+`
 
 const RoomWrapper = styled.div`
-  height: 30px;
-  width: 100%;
+  height: ${({$isSpacer}) => $isSpacer ? 26 : 30}px;
+  margin-left: ${({$depthOffset}) => $depthOffset}px;
+  width: calc(100% - ${({$depthOffset}) => $depthOffset});
   display: flex;
   align-items: center;
   position: relative;
+  user-select: none;
+  
+  ${ControlsWrapper} {
+    transition: opacity 0.5s 0.5s;
+    opacity: 0.2;
+  }
+
+  &:hover {
+    ${ControlsWrapper} {
+      transition: opacity 0.25s;
+      opacity: 1;
+    }
+  }
 `
 
 const RoomContainer = styled.div`
-  background-color: #1c2538;
+  background-color: ${({$isSpacer}) => $isSpacer ? 'none' : '#1c2538'};
   border-radius: 5px;
-  height: 22px;
+  height: ${({$isSpacer}) => $isSpacer ? 16 : 22}px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -31,12 +54,14 @@ const Image = styled.img`
 const ImageMask = styled.div`
   position: absolute;
   max-width: 100%;
-  width: 150px;
+  width: ${({$isSpacer}) => $isSpacer ? '100%' : '150px'};
   height: 100%;
   top: 0;
   bottom: 0;
   border-radius: var(--tsv-border-radius);
-  background: linear-gradient(to right, transparent 0%, #131824 22px 60%, transparent 100%);
+  background: ${({$isSpacer}) => $isSpacer
+    ? 'linear-gradient(to right, transparent 0%, #131824 45% 55%, transparent 100%)'
+    : 'linear-gradient(to right, transparent 0%, #131824 22px 60%, transparent 100%)'};
 `
 
 const RoomContent = styled.div`
@@ -51,9 +76,9 @@ const RoomContent = styled.div`
 `
 
 const RoomIcon = styled.div`
-    height: 24px;
-    width: 24px;
-    margin-right: 6px;
+  height: 24px;
+  width: 24px;
+  margin-right: 6px;
 `
 
 const RoomTitle = styled.span`
@@ -63,6 +88,27 @@ const RoomTitle = styled.span`
   margin-left: 6px;
   margin-top: 4px;
   margin-bottom: 4px;
+`;
+
+const SpacerTitle = styled.span`
+  display: inline-block;
+  width: 100%;
+  font-size: 13.6px;
+  font-style: italic;
+  color: #697a97;
+  text-align: center;
+`
+
+const RoomButton = ({...other}) => (<Button
+    // minimal={true}
+    small={true}
+    outlined={true}
+    {...other}
+/>)
+
+const StyledRoomButton = styled(RoomButton)`
+  zoom: 0.7;
+  margin-right: 0.2em;
 `
 
 /**
@@ -70,21 +116,37 @@ const RoomTitle = styled.span`
  *
  * @param name Name of the room
  * @param image Background image of the room (URL)
+ * @param isSpacer If set room will render as spacer
+ * @param setIsSpacer Callback when Spacer toggle is clicked
+ * @param onDepthUp Callback when depth down is clicked
+ * @param onDepthDown Callback when depth up is clicked
+ * @param depth Depth of the channel
+ * @param maxDepth Maximum allowd depth (based on the depth of the paren channel)
+ * @param other
  * @return {JSX.Element}
  * @constructor
  */
-const Room = ({name, image}) => {
+const Room = ({name, image, isSpacer, setIsSpacer, onDepthUp, onDepthDown, depth, maxDepth, ...other}) => {
+    const depthOffset = depth * CHANNEL_DEPTH_OFFSET;
+
     return (
-        <RoomWrapper>
+        <RoomWrapper $isSpacer={isSpacer} $depthOffset={depthOffset} {...other}>
             <RoomContent>
-                <RoomIcon>
+                {!isSpacer && <RoomIcon>
                     <img src={`roomIcon.svg`} alt={'Room Icon'}/>
-                </RoomIcon>
-                <RoomTitle>{name}</RoomTitle>
+                </RoomIcon>}
+                {isSpacer ? <SpacerTitle>{name}</SpacerTitle> : <RoomTitle>{name}</RoomTitle>}
+                <ControlsWrapper>
+                    {depth === 0 && <StyledRoomButton onClick={setIsSpacer}>{isSpacer ? 'room' : 'spacer'}</StyledRoomButton>}
+                    {!isSpacer && <>
+                        <StyledRoomButton onClick={onDepthUp} icon={'chevron-left'} disabled={depth <= 0}/>
+                        <StyledRoomButton onClick={onDepthDown} icon={'chevron-right'} disabled={depth >= 32 || depth >= maxDepth}/>
+                    </>}
+                </ControlsWrapper>
             </RoomContent>
-            <RoomContainer>
-                {image && <Image src={image} alt="Banner Fragment"/>}
-                <ImageMask/>
+            <RoomContainer $isSpacer={isSpacer}>
+                {image && <Image src={image} alt="Banner Fragment" $depthOffset={depth}/>}
+                {image && <ImageMask $isSpacer={isSpacer}/>}
             </RoomContainer>
         </RoomWrapper>
     );
