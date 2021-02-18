@@ -31,6 +31,7 @@ dependent on supported file formats of given browser.
 - [ ] Create a new logo (**Help wanted!**) and manifest file to make the app PWA 
 - [ ] Make an uploaded image saved in local storage
 - [ ] Support for animated banners (GIFs)
+- [ ] Option to fit image vertically to current count of the channels
 - [X] Support for spacers
 - [X] Support for nested channels
 - [X] Support for specifying background color for transparent banners
