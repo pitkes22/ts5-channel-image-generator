@@ -80,7 +80,7 @@ const Preview = () => {
                 })}
 
             </ScrollWrapper>
-            <ResetCallout icon={'info-sign'} title={'Customoze your channels structure'} intent={"primary"}>
+            <ResetCallout icon={'info-sign'} title={'Customize your channels structure'} intent={"primary"}>
                 You can use arrows on the right of the channel preview to make nested channels and toggle between normal
                 room and spacer.
                 <Button
