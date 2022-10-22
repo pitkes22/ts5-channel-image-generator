@@ -1,9 +1,10 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import Step from "./step";
 import {Button, Callout, Code, FileInput, FormGroup, Icon, InputGroup} from "@blueprintjs/core";
 import styled from 'styled-components';
 import {ImageManipulationContext} from "./imageManipulation";
 import {toaster} from "../pages";
+import {saveImageToLocalStorage, loadSavedImageFromLocalStorage} from '../utils/localStorage';
 
 const ImagePreview = styled.img`
   width: 300px;
@@ -120,6 +121,13 @@ const Upload = () => {
 
         const metadata = await getImageMetadataFromDataURL(dataURL);
 
+        saveImageToLocalStorage({
+            data: dataURL,
+            width: metadata.width,
+            height: metadata.height,
+            name: file.name
+        });
+
         setSourceImage({
             data: dataURL,
             width: metadata.width,
@@ -147,6 +155,14 @@ const Upload = () => {
             const metadata = await getImageMetadataFromDataURL(loadUrl);
 
             setIsUrlLoading(false);
+
+            saveImageToLocalStorage({
+                data: resizedImageDataURL,
+                width: metadata.width,
+                height: metadata.height,
+                name: "loaded"
+            });
+
             setSourceImage({
                 data: resizedImageDataURL,
                 width: metadata.width,
@@ -181,6 +197,15 @@ const Upload = () => {
             setIsUrlLoading(false);
         }
     }
+
+    // Loads image from local storage if it exists
+    useEffect(() => {
+        const image = loadSavedImageFromLocalStorage();
+
+        if (image != null) {
+            setSourceImage(image);
+        }
+    }, [])
 
     return (
         <UploadStep number={1}>
