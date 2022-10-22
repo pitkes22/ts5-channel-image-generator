@@ -29,7 +29,7 @@ dependent on supported file formats of given browser.
 - [ ] Rooms Structure serialization and persistence in local storage
 - [ ] Drag support for nested channels
 - [ ] Create a new logo (**Help wanted!**) and manifest file to make the app PWA 
-- [ ] Make an uploaded image saved in local storage
+- [X] Make an uploaded image saved in local storage
 - [ ] Support for animated banners (GIFs)
 - [ ] Option to fit image vertically to current count of the channels
 - [X] Support for spacers
