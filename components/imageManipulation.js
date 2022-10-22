@@ -26,13 +26,15 @@ const initialValue = {
         data: null,
         name: null,
         height: 30,
-        width: 100
+        width: 100,
+        origin: 'localStorage'
     },
     image: {
         data: null,
         name: null,
         height: 30,
-        width: 100
+        width: 100,
+        origin: 'localStorage'
     },
     exportStatus: {
         start: null,
@@ -270,9 +272,22 @@ const ImageManipulation = ({children}) => {
     const [image, setImage] = useState(initialValue.image);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
     const [imageObject, setImageObject] = useState();
+    const [optionUpdateAllowed, setOptionUpdateAllowed] = useState(false);
+    const [willResetOptions, setWillResetOptions] = useState(false);
     const lastSourceImage = useRef(null);
 
     const [canvas, _] = useState(getCanvas())
+
+    const resetOptions = () => {
+        setWillResetOptions(true);
+    }
+
+    // Update options in local storage when options change
+    useEffect(() => {
+        if(optionUpdateAllowed){
+            localStorage.setItem('options', JSON.stringify(options));
+        }
+    }, [options])
 
     // When source image is changed loads new imageObject into canvas
     useEffect(() => {
@@ -299,8 +314,16 @@ const ImageManipulation = ({children}) => {
                     data: resizedImage,
                     width: resizedImageMetadata.width,
                     height: resizedImageMetadata.height,
-                    name: sourceImage.name
+                    name: sourceImage.name,
+                    origin: sourceImage.origin
                 });
+
+                if(willResetOptions){
+                    const slices = getSlicesCount(resizedImageMetadata.width, resizedImageMetadata.height, rooms, options.ignoreSpacing);
+                    setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0}));
+                    setWillResetOptions(false);
+                }
+
                 setImageObject(await getImage(resizedImage));
                 const end = Date.now();
                 setExportStatus((c) => ({...c, end: end, delta: end - start}));
@@ -328,8 +351,9 @@ const ImageManipulation = ({children}) => {
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
         if (lastSourceImage.current === sourceImage) return;
+        if(image.origin !== "url" || image.origin !== "fileUpload") return;
         const slices = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
-        setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0}))
+        setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0})) 
         lastSourceImage.current = sourceImage;
     }, [image])
 
@@ -344,7 +368,10 @@ const ImageManipulation = ({children}) => {
         sourceImage,
         setSourceImage,
         rooms,
-        setRooms
+        setRooms,
+        optionUpdateAllowed,
+        setOptionUpdateAllowed,
+        resetOptions
     }
 
     return (

@@ -102,7 +102,7 @@ export const getImageMetadataFromDataURL = (url) => {
 
 
 const Upload = () => {
-    const {sourceImage, setSourceImage} = useContext(ImageManipulationContext);
+    const {sourceImage, setSourceImage, optionUpdateAllowed, setOptionUpdateAllowed, options, setOptions, resetOptions} = useContext(ImageManipulationContext);
     const [loadUrl, setLoadUrl] = useState("");
     const [isUrlLoading, setIsUrlLoading] = useState(false);
 
@@ -125,15 +125,19 @@ const Upload = () => {
             data: dataURL,
             width: metadata.width,
             height: metadata.height,
-            name: file.name
+            name: file.name,
+            origin: 'localStorage'
         });
 
         setSourceImage({
             data: dataURL,
             width: metadata.width,
             height: metadata.height,
-            name: file.name
+            name: file.name,
+            origin: 'fileUpload'
         })
+
+        resetOptions();
     }
 
     /**
@@ -160,15 +164,19 @@ const Upload = () => {
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
-                name: "loaded"
+                name: "loaded",
+                origin: 'localStorage'
             });
 
             setSourceImage({
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
-                name: "loaded"
+                name: "loaded",
+                origin: 'url'
             })
+
+            resetOptions();
         } catch (e) {
             console.error(e);
 
@@ -204,6 +212,13 @@ const Upload = () => {
 
         if (image != null) {
             setSourceImage(image);
+
+            const options = localStorage.getItem('options');
+            if(options){
+                setOptions(JSON.parse(options));
+            }
+
+            setOptionUpdateAllowed(true);
         }
     }, [])
 

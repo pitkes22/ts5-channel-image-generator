@@ -26,6 +26,7 @@ dependent on supported file formats of given browser.
 ## 📅 Planned Features 
 
 - [ ] Basic image manipulation (Flip, Offset, Scale)
+- [X] Options serialization and persistence in local storage
 - [ ] Rooms Structure serialization and persistence in local storage
 - [ ] Drag support for nested channels
 - [ ] Create a new logo (**Help wanted!**) and manifest file to make the app PWA 
