@@ -2,8 +2,15 @@ import React, {useContext, useEffect, useState} from 'react';
 import Step from "./step";
 import {ImageManipulationContext} from "./imageManipulation";
 import {Button, Code, FormGroup, InputGroup, ProgressBar} from "@blueprintjs/core";
+import styled from 'styled-components';
 import * as JSZip from "jszip";
 import {saveAs} from "file-saver";
+
+const StyledInputGroup = styled(InputGroup)`
+  .bp4-input {
+    box-shadow: 0 0 0 0 rgb(45 114 210 / 0%), 0 0 0 0 rgb(45 114 210 / 0%), inset 0 0 0 1px rgb(17 20 24 / 20%), inset 0 1px 1px rgb(17 20 24 / 50%);
+  }
+`
 
 const Export = () => {
     const {exportStatus, results, sourceImage} = useContext(ImageManipulationContext);
@@ -99,7 +106,7 @@ const Export = () => {
                     files.txt file for convenience</>}
                 disabled={disabled}
             >
-                <InputGroup
+                <StyledInputGroup
                     large={false}
                     fill={false}
                     onChange={(e) => {

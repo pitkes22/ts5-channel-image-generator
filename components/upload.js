@@ -47,6 +47,18 @@ const LoadButton = styled(Button)`
   width: 85px;
 `
 
+const StyledFileInput = styled(FileInput)`
+  .bp4-file-upload-input {
+    box-shadow: 0 0 0 0 rgb(45 114 210 / 0%), 0 0 0 0 rgb(45 114 210 / 0%), inset 0 0 0 1px rgb(17 20 24 / 20%), inset 0 1px 1px rgb(17 20 24 / 50%);
+  }
+`
+
+const StyledInputGroup = styled(InputGroup)`
+  .bp4-input {
+    box-shadow: 0 0 0 0 rgb(45 114 210 / 0%), 0 0 0 0 rgb(45 114 210 / 0%), inset 0 0 0 1px rgb(17 20 24 / 20%), inset 0 1px 1px rgb(17 20 24 / 50%);
+  }
+`
+
 /**
  * Loads image from url using image HTML element (used for testing CORS issues)
  *
@@ -240,7 +252,7 @@ const Upload = () => {
                         labelFor="file-input"
                         labelInfo="(Upload from your computer)"
                     >
-                        <FileInput
+                        <StyledFileInput
                             style={{width: 330}}
                             fill={true}
                             inputProps={{
@@ -260,7 +272,7 @@ const Upload = () => {
                         labelFor="file-url"
                         labelInfo="(Load from the internet)"
                     >
-                        <InputGroup
+                        <StyledInputGroup
                             style={{width: 330}}
                             large={true}
                             fill={true}
