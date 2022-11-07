@@ -1,9 +1,10 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import Step from "./step";
 import {Button, Callout, Code, FileInput, FormGroup, Icon, InputGroup} from "@blueprintjs/core";
 import styled from 'styled-components';
 import {ImageManipulationContext} from "./imageManipulation";
 import {toaster} from "../pages";
+import {saveImageToLocalStorage, loadSavedImageFromLocalStorage} from '../utils/localStorage';
 
 const ImagePreview = styled.img`
   width: 300px;
@@ -44,6 +45,18 @@ const FileSupportCallout = styled(Callout)`
 
 const LoadButton = styled(Button)`
   width: 85px;
+`
+
+const StyledFileInput = styled(FileInput)`
+  .bp4-file-upload-input {
+    box-shadow: 0 0 0 0 rgb(45 114 210 / 0%), 0 0 0 0 rgb(45 114 210 / 0%), inset 0 0 0 1px rgb(17 20 24 / 20%), inset 0 1px 1px rgb(17 20 24 / 50%);
+  }
+`
+
+const StyledInputGroup = styled(InputGroup)`
+  .bp4-input {
+    box-shadow: 0 0 0 0 rgb(45 114 210 / 0%), 0 0 0 0 rgb(45 114 210 / 0%), inset 0 0 0 1px rgb(17 20 24 / 20%), inset 0 1px 1px rgb(17 20 24 / 50%);
+  }
 `
 
 /**
@@ -101,7 +114,7 @@ export const getImageMetadataFromDataURL = (url) => {
 
 
 const Upload = () => {
-    const {sourceImage, setSourceImage} = useContext(ImageManipulationContext);
+    const {sourceImage, setSourceImage, optionUpdateAllowed, setOptionUpdateAllowed, options, setOptions, resetOptions} = useContext(ImageManipulationContext);
     const [loadUrl, setLoadUrl] = useState("");
     const [isUrlLoading, setIsUrlLoading] = useState(false);
 
@@ -120,12 +133,24 @@ const Upload = () => {
 
         const metadata = await getImageMetadataFromDataURL(dataURL);
 
-        setSourceImage({
+        saveImageToLocalStorage({
             data: dataURL,
             width: metadata.width,
             height: metadata.height,
             name: file.name
+        });
+
+        setSourceImage({
+            data: dataURL,
+            width: metadata.width,
+            height: metadata.height,
+            name: file.name,
         })
+
+        // Allow user to change options
+        setOptionUpdateAllowed(true);
+
+        resetOptions();
     }
 
     /**
@@ -147,12 +172,25 @@ const Upload = () => {
             const metadata = await getImageMetadataFromDataURL(loadUrl);
 
             setIsUrlLoading(false);
+
+            saveImageToLocalStorage({
+                data: resizedImageDataURL,
+                width: metadata.width,
+                height: metadata.height,
+                name: "loaded"
+            });
+
             setSourceImage({
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
                 name: "loaded"
             })
+
+            // Allow user to change options
+            setOptionUpdateAllowed(true);
+
+            resetOptions();
         } catch (e) {
             console.error(e);
 
@@ -182,6 +220,18 @@ const Upload = () => {
         }
     }
 
+    // Loads image from local storage if it exists
+    useEffect(() => {
+        const image = loadSavedImageFromLocalStorage();
+
+        if (image != null) {
+            setSourceImage(image);
+
+            // Allow editing of options after image from local storage is loaded
+            setOptionUpdateAllowed(true);
+        }
+    }, [])
+
     return (
         <UploadStep number={1}>
             <Col $width={'calc(100% - 350px)'}>
@@ -200,7 +250,7 @@ const Upload = () => {
                         labelFor="file-input"
                         labelInfo="(Upload from your computer)"
                     >
-                        <FileInput
+                        <StyledFileInput
                             style={{width: 330}}
                             fill={true}
                             inputProps={{
@@ -220,7 +270,7 @@ const Upload = () => {
                         labelFor="file-url"
                         labelInfo="(Load from the internet)"
                     >
-                        <InputGroup
+                        <StyledInputGroup
                             style={{width: 330}}
                             large={true}
                             fill={true}

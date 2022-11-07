@@ -57,7 +57,7 @@ export default class MyDocument extends Document {
                     }}/>
                 </Head>
 
-                <body className={'bp3-dark'}>
+                <body className={'bp4-dark'}>
                 <Main/>
                 <NextScript/>
                 </body>
