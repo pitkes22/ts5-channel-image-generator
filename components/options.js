@@ -64,7 +64,7 @@ const ColorPicker = styled(ChromePicker)`
 `
 
 const Options = () => {
-    const {options, setOptions, image, rooms, optionUpdateAllowed, setOptionUpdateAllowed} = useContext(ImageManipulationContext);
+    const {options, setOptions, optionUpdateAllowed, setOptionUpdateAllowed, image, rooms} = useContext(ImageManipulationContext);
 
     const maxChannels = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
     const maxVerticalOffset = ~~(image.height - getRoomsHeight(image.width, image.height, rooms, options.ignoreSpacing, options.slices));
@@ -73,7 +73,8 @@ const Options = () => {
 
     // When options are change check if current values are still valid and if not calculate new values for them
     useEffect(() => {
-        if(image.origin !== "url" || image.origin !== "fileUpload") return;
+        // When the initial image is still loading, don't update the options
+        if(!optionUpdateAllowed) return;
 
         if (options.slices > maxChannels) {
             setOption('slices', maxChannels);

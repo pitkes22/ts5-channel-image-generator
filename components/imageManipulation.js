@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {memoize, throttle} from "lodash";
 import {getImageMetadataFromDataURL} from "./upload";
+import useLocalStorageState from 'use-local-storage-state';
 
 export const SPACER_HEIGHT = 16;
 export const SPACER_BANNER_HEIGHT = 26;
@@ -268,7 +269,7 @@ const ImageManipulation = ({children}) => {
     const [sourceImage, setSourceImage] = useState(initialValue.sourceImage);
     const [rooms, setRooms] = useState(initialValue.rooms);
     const [results, setResults] = useState(initialValue.results);
-    const [options, setOptions] = useState(initialValue.options);
+    const [options, setOptions] = useLocalStorageState('options', {defaultValue: initialValue.options});
     const [image, setImage] = useState(initialValue.image);
     const [exportStatus, setExportStatus] = useState(initialValue.exportStatus);
     const [imageObject, setImageObject] = useState();
@@ -281,13 +282,6 @@ const ImageManipulation = ({children}) => {
     const resetOptions = () => {
         setWillResetOptions(true);
     }
-
-    // Update options in local storage when options change
-    useEffect(() => {
-        if(optionUpdateAllowed){
-            localStorage.setItem('options', JSON.stringify(options));
-        }
-    }, [options])
 
     // When source image is changed loads new imageObject into canvas
     useEffect(() => {
@@ -351,7 +345,7 @@ const ImageManipulation = ({children}) => {
     // When input file is changed it recalculates maxSlicesCount and resets yOffset option
     useEffect(() => {
         if (lastSourceImage.current === sourceImage) return;
-        if(image.origin !== "url" || image.origin !== "fileUpload") return;
+        if (!optionUpdateAllowed) return;
         const slices = getSlicesCount(image.width, image.height, rooms, options.ignoreSpacing);
         setOptions((o) => ({...o, slices, yOffset: 0, xOffset: 0})) 
         lastSourceImage.current = sourceImage;

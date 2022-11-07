@@ -137,8 +137,7 @@ const Upload = () => {
             data: dataURL,
             width: metadata.width,
             height: metadata.height,
-            name: file.name,
-            origin: 'localStorage'
+            name: file.name
         });
 
         setSourceImage({
@@ -146,8 +145,10 @@ const Upload = () => {
             width: metadata.width,
             height: metadata.height,
             name: file.name,
-            origin: 'fileUpload'
         })
+
+        // Allow user to change options
+        setOptionUpdateAllowed(true);
 
         resetOptions();
     }
@@ -176,17 +177,18 @@ const Upload = () => {
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
-                name: "loaded",
-                origin: 'localStorage'
+                name: "loaded"
             });
 
             setSourceImage({
                 data: resizedImageDataURL,
                 width: metadata.width,
                 height: metadata.height,
-                name: "loaded",
-                origin: 'url'
+                name: "loaded"
             })
+
+            // Allow user to change options
+            setOptionUpdateAllowed(true);
 
             resetOptions();
         } catch (e) {
@@ -225,11 +227,7 @@ const Upload = () => {
         if (image != null) {
             setSourceImage(image);
 
-            const options = localStorage.getItem('options');
-            if(options){
-                setOptions(JSON.parse(options));
-            }
-
+            // Allow editing of options after image from local storage is loaded
             setOptionUpdateAllowed(true);
         }
     }, [])
